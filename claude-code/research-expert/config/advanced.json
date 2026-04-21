@@ -1,0 +1,31 @@
+{
+  "version": "2.0",
+  "note": "高级配置——更严格的质量要求，适合正式研究项目。",
+
+  "quality": {
+    "min_evidence_per_conclusion": 3,
+    "confidence_levels": ["高", "中", "低"],
+    "require_detective_memo": true,
+    "require_multiple_source_types": true,
+    "require_contradiction_audit": true
+  },
+
+  "output": {
+    "format": "markdown",
+    "language": "zh-CN",
+    "save_intermediate_to_work": true,
+    "include_methodology_section": true,
+    "include_limitations_section": true
+  },
+
+  "workflow": {
+    "checkpoints": ["project_understood", "evidence_collected", "detective_analysis_done", "report_drafted", "quality_checked", "feedback_incorporated"],
+    "ask_confirmation_at_checkpoints": true
+  },
+
+  "toolkit": {
+    "note": "启用工具箱时的默认工具选择策略",
+    "auto_select_by_topic_type": true,
+    "always_enable_cognitive_bias_protection": true
+  }
+}

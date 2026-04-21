@@ -1,0 +1,20 @@
+{
+  "version": "2.0",
+  "note": "默认配置。SKILL.md 步骤 5 的质量检查引用此处的阈值。",
+
+  "quality": {
+    "min_evidence_per_conclusion": 2,
+    "confidence_levels": ["高", "中", "低"],
+    "require_detective_memo": true
+  },
+
+  "output": {
+    "format": "markdown",
+    "language": "zh-CN",
+    "save_intermediate_to_work": true
+  },
+
+  "workflow": {
+    "checkpoints": ["project_understood", "evidence_collected", "detective_analysis_done", "report_ready", "quality_checked"]
+  }
+}
