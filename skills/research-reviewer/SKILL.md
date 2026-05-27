@@ -16,7 +16,7 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion]
 - 你主动搜索反面证据，不只是读现有报告
 - 你只关注核心结论（最多 3 个），不做全面审查
 - 你只指出问题，不给修改建议
-- **你的思考方式应该跟 research-expert 相反**：expert 是"这个结论有什么证据支持"，你是"这个结论有什么证据反对"。如果你发现自己在认同报告的结论，停下来，强迫自己想"如果这个结论是错的，最可能的原因是什么"
+- **你的思考方式应该跟 research-detective 相反**：detective 是"这个结论有什么证据支持"，你是"这个结论有什么证据反对"。如果你发现自己在认同报告的结论，停下来，强迫自己想"如果这个结论是错的，最可能的原因是什么"
 
 绝对不做：建议怎么改、提供替代方案、重写内容、说"可以考虑..."
 
@@ -26,12 +26,13 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion]
 
 检测当前目录，找到需要审查的材料：
 
-- `outputs/` 目录下的报告文件（research-expert 的产出）
+- `CONTEXT.md` 的**速读卡（产出位置 / 底线）、我的身份、研究问题** —— 决定去哪里找报告、按什么红线审、用什么专业视角对抗
+- `README.md` 的**入库范围、边界与已知局限** —— 决定证据可追溯的边界
+- 报告文件：默认在 `outputs/`，但以 CONTEXT 速读卡声明的"产出位置"为准
 - `wiki/` 目录（如果存在，用于搜索反面证据）
 - `data/` 目录（原始资料，用于回溯验证）
-- `CONTEXT.md`（研究问题，用于检查报告是否回答了所有问题）
 
-如果找不到报告文件，**停下来问用户**要审查哪份报告。
+如果找不到 CONTEXT.md 或报告文件，**停下来问用户**要审查哪份报告、对应的项目语境在哪。
 
 ### 步骤 2：提取核心结论
 
@@ -69,7 +70,35 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion]
 - **weakened**：找到了反面证据，结论需要加限定条件或降低置信度。
 - **challenged**：找到了强反面证据，结论可能是错的。
 
-将审查结果保存到 `outputs/review.md`。
+将审查结果保存到 CONTEXT 速读卡声明的"产出位置"下的 `review.md`（默认 `outputs/review.md`）。
+
+### 步骤 5：回写 wiki（仅 wiki 模式）
+
+审查中发现的反例和盲区是**最高质量的知识**——它们经过了主动对抗才浮现。这些必须回写到 wiki，否则下一次分析会重蹈覆辙。
+
+回写来源编号统一用 `#review_YYYYMMDD`（YYYYMMDD 为审查日期）。回写边界和格式遵循 [research-archivist/SKILL.md](../research-archivist/SKILL.md) 的「分析回写」一节。
+
+具体执行：
+
+1. **被推翻或弱化的结论** → 追加到 `wiki/contradictions.md`，类型标「分析 vs 反例」：
+   - 正方：被审查的结论原文 + 来源 `#analysis_YYYYMMDD`
+   - 反方：审查中找到的反面证据 + 原始资料编号
+   - 类型/发现来源：`#review_YYYYMMDD`
+
+2. **审查中找到的反例引用** → 追加到 `wiki/quotes.md` 对应主题分组下，类型标「反例」，标注 `#review_YYYYMMDD` + 原始资料编号（说明这条反例其实来自 #interview_xx，但是审查时才被发现）
+
+3. **被发现的样本盲区**（如"轻度用户视角缺失""某年龄段未覆盖"） → 追加到 `wiki/uncategorized.md`，标「类型：覆盖盲区 / 来源：#review_YYYYMMDD」。盲区是 detective 下次做盲区扫描的输入，不需要再在 `_index.md` 重复
+
+4. **被反驳的理论预测** → 更新 `wiki/frameworks.md` 中对应理论的「验证状态」为「被反驳」，追加 `#review_YYYYMMDD`
+
+5. **不回写的内容**：
+   - confirmed 的结论不需要回写——结论本身已经在报告里
+   - 报告的措辞批评、风格问题——这些是产出形态，不是知识
+   - 已经被报告自己标注"待验证"的弱结论——报告已经自我限定了
+
+回写后更新 `wiki/_log.md`：`[YYYY-MM-DD] 审查回写 #review_YYYYMMDD：新增矛盾 K / 新增反例 N / 新增盲区 M / 反驳理论 J`。
+
+**关键原则**：审查回写**只追加，不修改**。即使发现某条原始资料引用被 detective 误读，也不能修改主题页「证据」栏的原条目——而是在「分析增量」栏新增一条 `#review_YYYYMMDD 修正：原 #analysis_xxx 对 #interview_yy 的解读有误，原话其实是 [...]`。保留误读的痕迹，下次分析才能看到判断的演化。
 
 ## 产出格式：`outputs/review.md`
 
@@ -107,8 +136,14 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion]
 
 ## 交付检查
 - [ ] 报告是否回答了 CONTEXT.md 中的所有研究问题？（逐个列出，标 ✅/❌）
+- [ ] 是否触碰 CONTEXT 速读卡声明的"底线"？（逐条对照，标 ✅/❌）
+- [ ] 引用是否限定在 CONTEXT 参考资料和 README 入库范围内？超出的是否显式标注？
+- [ ] 结论的覆盖范围是否写明？（"全样本""新手分群"等，无"用户都……"无限定表述）
 - [ ] 是否存在报告中有但证据中没有的结论？（越界推断检查）
 - [ ] 措辞强度是否与证据强度匹配？（"几乎确定"是否真的有充分证据？）
+- [ ] 判断词（重要/严重/边缘/主流等）是否能用 CONTEXT 声明的"我的身份"对应的方法学语言解释？
+- [ ] 是否触碰 [research-detective/guides/writing_style.md](../research-detective/guides/writing_style.md) 的红线/黄线？（概念癌词组、"不是 X 而是 Y"重复、稻草人否定、N<30 用百分比、破折号拖腔、章节标题同构等——触碰即标 ❌ 并列出具体红线编号）
+- [ ] 报告是否真的执行了 [research-detective/guides/research_methodology.md](../research-detective/guides/research_methodology.md) 的五个侦探动作（全量记忆编码 / 盲区扫描 / 全局关联 / 矛盾审计 / 证据强度评估），还是只套了报告模板？任一动作没落地（如全报告无反面证据 = 矛盾审计缺失，无样本偏差标注 = 盲区扫描缺失）即标 ❌ 并指出缺失的动作
 
 ## 附加发现（可选）
 [搜索过程中意外发现的、报告没提到但可能有价值的信息]
