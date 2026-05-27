@@ -1,0 +1,11 @@
+{
+  "name": "ai-research-detective",
+  "owner": { "name": "marco" },
+  "plugins": [
+    {
+      "name": "ai-research-detective",
+      "source": "./",
+      "description": "侦探方法论研究分析工具集：入库（archivist）+ 分析（detective）+ 对抗审查（reviewer）"
+    }
+  ]
+}
