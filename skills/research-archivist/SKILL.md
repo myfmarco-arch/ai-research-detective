@@ -212,6 +212,7 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
    - 新证据涌现新主题 → 创建新主题页
    - 已有主题在新资料中完全缺失 → 在 `wiki/uncategorized.md` 标注"沉默信号"
 4. 更新所有索引和统计
+5. **跑一次入库回检**（步骤 5）——增量更新最容易漏标矛盾、漏归类、改写引用，必须回检兜底。抽样范围:**优先抽新增资料 + 被新增资料修改过的旧主题页对应的原始资料**,不是从全量随机抽。`_log.md` 回检记录里写明"增量回检,抽 #interview_xx(新增)+ #interview_yy(因新增触发了主题 Z 的更新)"
 
 ## 分析回写（让 wiki 持续生长）
 
