@@ -4,7 +4,7 @@
 
 A research analysis toolkit powered by the **Detective Method** — a meta-analysis paradigm that leverages LLM's perfect memory and unbiased global scanning to complement human researchers' cognitive limitations.
 
-本仓库本身就是一个 **Claude Code plugin**，包含三个协作的 skill（archivist 入库 / detective 分析 / reviewer 审查）和它们共用的 `shared/` 资源（冷启动流程、模板、项目级 `CLAUDE.md`）。
+本仓库本身就是一个 **Claude Code plugin**，包含三个协作的 skill（archivist 入库 / detective 分析 / reviewer 审查）和它们共用的 `shared/` 资源——冷启动流程（驱动 skill 在空项目里自动生成 `CONTEXT.md`、`README.md` 并把项目级 `CLAUDE.md` 复制到研究项目根）、模板、项目级硬约束。
 
 ---
 
@@ -34,9 +34,11 @@ A research analysis toolkit powered by the **Detective Method** — a meta-analy
 将原始研究资料增量入库为结构化 wiki 知识库（**LLM-as-Wiki** 方法论——把原始资料编译成 LLM 友好的结构化知识库，让分析直接在"编译好的知识"上工作，而不是每次重读原文）：
 
 - LLM 逐份阅读原始资料（不是 Python 关键词匹配）
-- 支持四种资料类型：定性访谈、定量问卷、文献、竞品
+- 支持四种资料类型：定性访谈、定量问卷、文献、竞品（详见下文[支持的资料类型](#支持的资料类型)）
 - 增量更新：新资料只处理新增，与已有 wiki 对照整合
 - 入库时即时标记矛盾和异常
+
+> **何时跳过 wiki**：资料量 ≤50 份时，可以不入库，直接让 detective 在 `data/` 上做证据采集。wiki 模式的优势在大数据量、多轮次、增量更新场景。
 
 ### research-detective（侦探分析）
 
@@ -73,12 +75,14 @@ A research analysis toolkit powered by the **Detective Method** — a meta-analy
 
 ## 实测效果
 
-在 251 份用户访谈 + 188 份问卷的真实项目中验证：
+在一个 250 份级别用户访谈 + 问卷规模的真实项目中验证过这套方法论。下列数字来自该项目，**案例已脱敏，原始数据未随仓库发布**，所以这些数字是说明性的，不是可独立复现的 benchmark：
 
-- wiki 入库 10 分钟处理 251 份访谈，涌现 13 个主题、5 条矛盾、8 条未归类观察
-- 侦探分析 5 分钟产出战略对齐报告
-- 发现"来电识别 25.9% 提及率是假象，80%+ 出现在隐私恐惧语境"——只有理解语境才能做到
-- 发现"没有底线的人其实都有底线"——108 人说没底线，但 33 人同时有隐私顾虑，仅 2 人真正无顾虑
+- wiki 入库阶段在十分钟量级内处理完所有访谈，涌现出十几个主题、若干矛盾和未归类观察
+- 侦探分析阶段在五分钟量级内产出战略对齐报告
+- 一个典型的"语境修正"发现：某项功能被高频提及，但绝大多数提及是出现在隐私恐惧语境下——只看频率会得出错误结论，必须把语境读进去
+- 一个典型的"矛盾审计"发现：自称"没有底线"的用户与同时表达隐私顾虑的用户高度重叠，真正无顾虑的人其实极少——直觉的人群划分与证据交叉后并不成立
+
+这两类发现是侦探方法论本身想解决的问题（语境塌陷、矛盾选择性忽略），可以作为方法论价值的示例，而不应被读作"这个工具一定能稳定复现这些数字"。
 
 ## 安装
 
@@ -101,7 +105,7 @@ A research analysis toolkit powered by the **Detective Method** — a meta-analy
 ln -s "$(pwd)" ~/.claude/plugins/ai-research-detective
 ```
 
-安装后，三个 skill（`research-archivist`、`research-detective`、`research-reviewer`）会自动被发现，通过自然语言或 `加载 X skill` 触发。
+安装后，三个 skill（`research-archivist`、`research-detective`、`research-reviewer`）会自动被发现。Claude Code 用每个 skill 的 `description` 字段（写在各 SKILL.md 顶部 frontmatter）做触发匹配——所以"帮我把访谈入库"会激活 archivist、"分析一下用户访谈"会激活 detective、"审查这份报告"会激活 reviewer。也可以显式说 `加载 research-detective skill` 强制加载。
 
 > 项目级 `CLAUDE.md`（研究产出质量底线）由各 skill 在冷启动时**自动从 plugin 内 `shared/CLAUDE.md` 复制到你的研究项目根**——不需要手动操作。
 
@@ -217,7 +221,7 @@ ai-research-detective/                   # 仓库根 = plugin 根
         └── SKILL.md                     # 对抗性审查工作流
 ```
 
-> SKILL.md 内用 `../../shared/...` 跨出 `skills/<skill-name>/` 两级到 plugin 根目录的 `shared/`。
+> SKILL.md 内用 `../../shared/...` 从 `skills/<skill-name>/SKILL.md` 上溯两级（先到 `skills/`，再到 plugin 根）后进入 `shared/`，访问共用资源。
 
 ## 提示
 
