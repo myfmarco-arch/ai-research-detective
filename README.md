@@ -58,7 +58,7 @@ A research analysis toolkit powered by the **Detective Method** — a meta-analy
 
 对 detective 产出的报告做对抗性验证：
 
-- 提取 2-3 个核心结论，主动搜索反面证据尝试推翻
+- 按"推翻则报告失效"的标准筛核心结论，每批 ≤ 3 条做深审；多课题/战略级报告分批审，不为覆盖广度牺牲对抗深度
 - 判定每个结论：**confirmed**（经得起对抗）/ **weakened**（需加限定）/ **challenged**（可能是错的）
 - 产出 `review.md`，detective 读取后修改被 weakened/challenged 的结论
 
@@ -158,7 +158,7 @@ research-detective 会检测到 `wiki/` 目录，跳过证据采集，直接在 
 用 research-reviewer 审查这份报告
 ```
 
-reviewer 会提取核心结论，主动搜索反面证据，产出 `outputs/review.md`。
+reviewer 会按"推翻则报告失效"的标准筛核心结论（每批 ≤ 3 条，多课题报告分批审），主动搜索反面证据，产出 `outputs/review.md`。
 
 然后让 detective 根据审查结果修正：
 
@@ -210,13 +210,10 @@ ai-research-detective/                   # 仓库根 = plugin 根
     │   │   ├── detective_toolkit.md     # 26 个分析工具（按需加载，末尾有速查表）
     │   │   ├── report_principles.md     # 报告结构与论证质量规范 + 13 项自检清单
     │   │   └── writing_style.md         # 写作风格红线/黄线（去 AI 味、堵套路句式）
-    │   ├── templates/
-    │   │   ├── simple_report.md         # 研究报告模板
-    │   │   ├── answer_summary.md        # A1 回答/摘要模板
-    │   │   └── evidence_chain.md        # A2 证据链图谱模板
-    │   └── config/
-    │       ├── default.json             # 默认配置（每个结论 ≥2 条证据）
-    │       └── advanced.json            # 高级配置（正式项目用，每个结论 ≥3 条证据）
+    │   └── templates/
+    │       ├── simple_report.md         # 研究报告模板
+    │       ├── answer_summary.md        # A1 回答/摘要模板
+    │       └── evidence_chain.md        # A2 证据链图谱模板
     └── research-reviewer/
         └── SKILL.md                     # 对抗性审查工作流
 ```

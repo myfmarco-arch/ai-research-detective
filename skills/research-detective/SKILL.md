@@ -204,9 +204,9 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 **报告规范（强制加载，落笔前读）**：
 
 - [guides/report_principles.md](guides/report_principles.md) — 报告的**结构与论证质量**。三层原则(底线/结构/表达)+ 金字塔原理 + 标准大纲 + 13 项自检清单。报告模式必读，提问模式（A1+A2）至少读一遍底线层。
-- [guides/writing_style.md](guides/writing_style.md) — **句子和措辞**。心法 4 条 + 红线 10 条 + 自查清单 12 条，专治 AI 写作的概念癌、稻草人、破折号拖腔、N<30 用百分比等典型套路。
+- [guides/writing_style.md](guides/writing_style.md) — **句子和措辞**。心法 5 条 + 红线 10 条 + 自查清单，专治 AI 写作的概念癌、稻草人、破折号拖腔、N<30 用百分比等套路。**关键定调：研究员要敢给观点和建议（鼓励大胆假设），但每条建议必须挂证据锚 + 边界 + 可证伪的下一步**——大胆假设、小心求证（详见心法 5、红线 6）。
 
-两份合起来构成报告的完整产出标准。落笔后用 `report_principles.md` 文末的 13 项清单 + `writing_style.md` 的 12 条清单逐条勾选，任一项不过 → 改完再交付。
+两份合起来构成报告的完整产出标准。落笔后用 `report_principles.md` 文末的 13 项清单 + `writing_style.md` 的 15 条清单逐条勾选，任一项不过 → 改完再交付。
 
 **对照 CONTEXT 的项目级约束**：
 - **身份**：用 CONTEXT 的"我的身份"声明的专业视角判断，每个判断词（重要/严重/边缘/主流等）能用方法学语言解释依据
@@ -233,7 +233,7 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 **B. 报告规范**（落笔后强制对照，任一项不过 → 改完再交付）
 
 - [ ] [guides/report_principles.md](guides/report_principles.md) 文末 **13 项自检清单**全部通过（底线 2 + 结构 7 + 表达 4）
-- [ ] [guides/writing_style.md](guides/writing_style.md) 的**自查清单 12 条**全部通过
+- [ ] [guides/writing_style.md](guides/writing_style.md) 的**自查清单 15 条**全部通过
 
 **C. 侦探方法专属**（本 skill 的差异化价值，不能跳）
 

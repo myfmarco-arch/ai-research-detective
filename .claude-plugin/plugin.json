@@ -1,6 +1,6 @@
 {
   "name": "ai-research-detective",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "侦探方法论研究分析工具集：入库（archivist）+ 分析（detective）+ 对抗审查（reviewer），三个 skill 共享冷启动流程、模板和项目级硬约束。",
   "author": {
     "name": "marco"
