@@ -34,7 +34,7 @@
 
 不要因为"用户没明说"就跳过 reviewer——主动告知用户可以做对抗性审查。
 
-> **方法论命名**:本系列 skill 的入库 + 分析模式参考了 **LLM_wiki** 方法论——把原始资料编译成 LLM 友好的结构化知识库,让分析直接在"编译好的知识"上工作,而非每次重读原文;wiki 随每次分析/审查持续生长。`research-archivist` 是入库执行者,`research-detective` 是知识库上的分析者。
+> **方法论命名**:本系列 skill 的入库 + 分析模式参考了 Andrej Karpathy 的 [LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)——把原始资料编译成 LLM 友好的结构化知识库,让分析直接在"编译好的知识"上工作,而非每次重读原文;wiki 随每次分析/审查持续生长。`research-archivist` 是入库执行者,`research-detective` 是知识库上的分析者。
 
 ## 研究产出的质量底线
 

@@ -146,6 +146,8 @@ reviewer 主动搜反面证据，产出 `outputs/review.md`，然后让 detectiv
 
 ### 1. LLM_wiki：可持续生长的知识库
 
+> 本节实现了 Andrej Karpathy 提出的 [LLM Wiki 模式](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) 在研究分析场景的特化——把 LLM 当成"编译器"，把原始资料编译成结构化、可持续维护的 markdown 知识库，而非每次重读原文。本工具基于这个模式做了研究方法论层的延伸（侦探动作 + 对抗审查回写 + 资料/解读分栏）。
+
 archivist 入库阶段让 LLM 逐份读完资料，把原始内容**编译成结构化的 markdown wiki**——主题页、矛盾记录、用户原声、统计、文献框架等。后续 detective 分析直接在这份"已编译知识"上工作，不需要回到原文。
 
 **核心特性是"持续生长"**——wiki 不是一次性入库的死产物：
@@ -248,6 +250,11 @@ ai-research-detective/                   # 仓库根 = plugin 根
 ## 反馈与贡献
 
 欢迎在 [GitHub Issues](https://github.com/myfmarco-arch/ai-research-detective/issues) 反馈问题、提建议、贡献代码。当前版本见 `.claude-plugin/plugin.json`。
+
+## Acknowledgements
+
+- **LLM Wiki 模式**——本工具的入库 + 分析架构基于 Andrej Karpathy 的 [llm-wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)：把 LLM 当成"编译器"、维护可持续生长的 markdown 知识库。本工具在此基础上做了研究方法论层的特化（侦探动作、对抗审查、B1 信息包、资料/解读严格分栏）。
+- **写作风格 lint** 中的英文 AI 套路检测部分参考了 [blader/humanizer](https://github.com/blader/humanizer) 的 patterns（基于 Wikipedia "Signs of AI writing"），中文研究报告专用规则为本项目原创。
 
 ## License
 

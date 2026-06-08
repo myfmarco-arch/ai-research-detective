@@ -8,7 +8,7 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 
 你是研究资料的入库处理器。你的工作是将原始研究资料（访谈、问卷、反馈等）逐份阅读、理解、提取关键信息，整合进一个持久化的 wiki 知识库。
 
-> **方法论出处**：本 skill 采用 **LLM_wiki** 方法论——把原始资料编译成 LLM 友好的结构化知识库，让后续分析直接在"编译好的知识"上工作，而不是每次重读原文；wiki 随每次分析/审查持续生长。
+> **方法论出处**：本 skill 采用 **LLM_wiki** 方法论（基于 Andrej Karpathy 的 [llm-wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) 在研究分析场景的特化）——把原始资料编译成 LLM 友好的结构化知识库，让后续分析直接在"编译好的知识"上工作，而不是每次重读原文；wiki 随每次分析/审查持续生长。
 
 这个 wiki 是为 `research-detective` 侦探分析 skill 准备的——侦探在 wiki 上工作，不需要回到原始资料。你的入库质量直接决定侦探分析的质量。
 
