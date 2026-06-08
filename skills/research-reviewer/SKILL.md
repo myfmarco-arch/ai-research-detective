@@ -83,7 +83,7 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion]
 
 审查中发现的反例和盲区是**最高质量的知识**——它们经过了主动对抗才浮现。这些必须回写到 wiki，否则下一次分析会重蹈覆辙。
 
-回写来源编号统一用 `#review_YYYYMMDD`（YYYYMMDD 为审查日期）。回写边界和格式遵循 [research-archivist/SKILL.md](../research-archivist/SKILL.md) 的「分析回写」一节。
+回写来源编号统一用 `#review_YYYYMMDD`（YYYYMMDD 为审查日期）。回写边界和格式遵循 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)（wiki 页面结构见 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)）。
 
 具体执行：
 
@@ -147,7 +147,7 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion]
 - [ ] 是否存在报告中有但证据中没有的结论？（越界推断检查）
 - [ ] 措辞强度是否与证据强度匹配？（"几乎确定"是否真的有充分证据？）
 - [ ] 判断词（重要/严重/边缘/主流等）是否能用 CONTEXT 声明的"我的身份"对应的方法学语言解释？
-- [ ] 是否触碰 [research-detective/guides/writing_style.md](../research-detective/guides/writing_style.md) 的红线/黄线？（概念癌词组、"不是 X 而是 Y"重复、稻草人否定、N<30 用百分比、破折号拖腔、章节标题同构等——触碰即标 ❌ 并列出具体红线编号）
+- [ ] **跑一次 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py <报告文件>`**：红线 0 处？黄线已逐条人工复核给出非套路理由？输出（红线/黄线计数 + 命中行号）粘贴到本节作为证据。lint 覆盖 17 条机器可查规则（11 红 6 黄），按 5 层组织——完整对照见 [writing_style.md 第七节](../research-detective/guides/writing_style.md)。论证层（建议悬空 / 标题非 finding / 稻草人 / 同义词堆叠 / 用户语气倾向 / 论证层春秋笔法）仍需人工对照
 - [ ] 报告是否真的执行了 [research-detective/guides/research_methodology.md](../research-detective/guides/research_methodology.md) 的五个侦探动作（全量记忆编码 / 盲区扫描 / 全局关联 / 矛盾审计 / 证据强度评估），还是只套了报告模板？任一动作没落地（如全报告无反面证据 = 矛盾审计缺失，无样本偏差标注 = 盲区扫描缺失）即标 ❌ 并指出缺失的动作
 
 ## 附加发现（可选）

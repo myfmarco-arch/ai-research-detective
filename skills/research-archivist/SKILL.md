@@ -8,7 +8,7 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 
 你是研究资料的入库处理器。你的工作是将原始研究资料（访谈、问卷、反馈等）逐份阅读、理解、提取关键信息，整合进一个持久化的 wiki 知识库。
 
-> **方法论出处**：本 skill 采用 **LLM-as-Wiki** 方法论——把原始资料编译成 LLM 友好的结构化知识库，让后续分析直接在"编译好的知识"上工作，而不是每次重读原文。
+> **方法论出处**：本 skill 采用 **LLM_wiki** 方法论——把原始资料编译成 LLM 友好的结构化知识库，让后续分析直接在"编译好的知识"上工作，而不是每次重读原文；wiki 随每次分析/审查持续生长。
 
 这个 wiki 是为 `research-detective` 侦探分析 skill 准备的——侦探在 wiki 上工作，不需要回到原始资料。你的入库质量直接决定侦探分析的质量。
 
@@ -18,7 +18,7 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 2. **增量处理**。新资料进来时，更新已有 wiki 页面，不是重建
 3. **矛盾即时标记**。入库时发现与已有知识矛盾的内容，立即记录到矛盾页
 4. **未归类的不丢弃**。无法归入任何主题的观察，放进待审页——这是侦探盲区扫描的输入
-5. **wiki 随分析生长**。每次 `research-detective` 侦探分析、`research-reviewer` 对抗审查产生的新涌现（新主题、新矛盾、新关联、被反驳的理论、被发现的盲区），都会回写到 wiki。wiki 不是只在入库时变化，而是随着分析不断变厚——这是与传统知识库的核心区别。回写规则见下方「分析回写」一节。
+5. **wiki 随分析生长**。每次 `research-detective` 侦探分析、`research-reviewer` 对抗审查产生的新涌现（新主题、新矛盾、新关联、被反驳的理论、被发现的盲区），都会回写到 wiki。wiki 不是只在入库时变化，而是随着分析不断变厚——这是与传统知识库的核心区别。回写规则见 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)。
 
 ## 项目结构
 
@@ -214,129 +214,14 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 4. 更新所有索引和统计
 5. **跑一次入库回检**（步骤 5）——增量更新最容易漏标矛盾、漏归类、改写引用，必须回检兜底。抽样范围:**优先抽新增资料 + 被新增资料修改过的旧主题页对应的原始资料**,不是从全量随机抽。`_log.md` 回检记录里写明"增量回检,抽 #interview_xx(新增)+ #interview_yy(因新增触发了主题 Z 的更新)"
 
-## 分析回写（让 wiki 持续生长）
+## 跨 skill 契约
 
-wiki 不是一次性入库的产物。`research-detective` 的侦探分析和 `research-reviewer` 的对抗审查会持续产生新的涌现，这些都会回写到 wiki，让下一次分析站在更厚的知识基底上。
+archivist 与 detective、reviewer 的接口规范统一收在 `contracts/`：
 
-### 来源编号约定（区分"资料 vs 分析"）
+- **wiki 页面格式**:[../../contracts/wiki_format.md](../../contracts/wiki_format.md) — 主题页 / 矛盾记录的结构模板,以及"资料栏 vs 分析增量栏"的硬约束
+- **分析回写规则**:[../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md) — 来源编号约定、detective/reviewer 的回写通道、回写边界、不篡改资料栏、回写后必做
 
-每条证据/观察必须标注来源编号，格式如下：
-
-- `#interview_xx` / `#survey_xx` / `#feedback_xx` —— 来自原始资料（一手证据）
-- `#analysis_YYYYMMDD` —— 来自 `research-detective` 的某次侦探分析（二手涌现）
-- `#review_YYYYMMDD` —— 来自 `research-reviewer` 的某次对抗审查（三手反例/盲区）
-- `#framework_xx` —— 来自文献框架的理论预测
-- `#benchmark_xx` —— 来自竞品基准的对照
-
-读者必须能一眼区分"用户原话"和"AI 推断"——前者是事实，后者是解读。
-
-**同一天多次分析的版本号规则**：
-- 默认日级粒度足够：同一天内的多次分析回写共用 `#analysis_YYYYMMDD`，各条目按时间顺序追加即可
-- 同一天发生方向不同的两次分析（如上午做用户分群、下午做体验旅程），需要区分时，后续追加 `-v2` `-v3` 后缀：`#analysis_20260527-v2`
-- `#review_YYYYMMDD` 同样规则：同一天多轮审查用 `-v2` `-v3` 区分
-- **不要用时间戳**（如 `#analysis_20260527_1430`）——日级 + 序号已经够细，再细就成噪音
-- 长期项目跨年累积时，编号天然按日期排序，不会冲突
-
-### 回写通道
-
-`research-detective` 完成分析后，回写以下内容（由 detective 调用本 skill 的回写规则）：
-
-1. **新涌现主题** → 在 `wiki/themes/` 创建 `theme_xxx.md`，头部标注「来源类型：分析涌现」。证据栏放支撑此主题的一手资料引用（散落在原 `#interview_xx` 中，被分析重新连接起来——这些引用原本就在资料里，只是组合视角是新的）；分析增量栏标 `#analysis_YYYYMMDD`，说明"为什么把这些引用归为同一主题"。**如果一个主题完全找不到一手资料支撑，不要建主题页，放 uncategorized.md 即可。**
-2. **新发现矛盾** → 追加到 `wiki/contradictions.md`，标注双方证据来源（资料编号）+ 发现这条矛盾的分析编号
-3. **新发现的全局关联** → 在相关主题页的「关联主题」栏新增条目，标 `#analysis_YYYYMMDD`
-4. **理论验证状态变化** → 更新 `wiki/frameworks.md` 中对应理论的「验证状态」字段（已验证/待验证/被反驳），追加 `#analysis_YYYYMMDD`
-5. **沉默信号识别** → 追加到 `wiki/uncategorized.md`，标注「类型：沉默信号 / 来源：#analysis_YYYYMMDD」
-
-`research-reviewer` 完成审查后，回写以下内容：
-
-1. **被推翻或弱化的结论** → 追加到 `wiki/contradictions.md`，作为"分析 vs 反例"的矛盾记录，标 `#review_YYYYMMDD`
-2. **审查中发现的反例引用** → 追加到 `wiki/quotes.md`，标注「类型：反例 / 来源：#review_YYYYMMDD + 原始资料编号」
-3. **审查中发现的样本盲区** → 追加到 `wiki/uncategorized.md`，标注「类型：覆盖盲区 / 来源：#review_YYYYMMDD」
-
-### 回写 vs 不回写的边界
-
-**回写**（值得入 wiki，下次分析能用上）：
-- 新主题、新矛盾、新关联、新反例、新盲区、理论验证状态变化
-- 跨资料的元发现（"#03 和 #17 在不同问题上其实在描述同一现象"）
-
-**不回写**（只留在 `process/` 或报告里，不污染 wiki）：
-- 报告的措辞、章节结构、优先级排序——这些是产出形态，不是知识
-- 重复表达已有 wiki 内容的总结、综述——wiki 已经有了
-- 任务态信息：当前在分析什么、下一步打算做什么——这是 todo，不是知识
-- 单纯的数字汇总（除非揭示了新分布）
-
-判断标准一句话：**"如果三个月后另一位研究员接手，看 wiki 时希望知道这条吗？"** 是 → 回写；否 → 不回写。
-
-### 不要篡改资料栏
-
-回写到主题页时，**新涌现的内容写入「分析增量」栏，不要混进「证据」栏**（证据栏只放原始资料引用）。这条边界保证了 wiki 永远能区分"事实"和"解读"——侦探推断可能错，但资料引用是不变的事实。
-
-**分析涌现的主题怎么处理证据栏**：分析涌现 ≠ 凭空创造。如果分析发现一个新主题，它一定是把原本散落在不同资料里的 `#interview_xx` 引用以新的视角连起来——这些引用本身是事实，证据栏正常列出；分析增量栏写"为什么把这些归为同一主题（这是入库时没看出来的视角）"。**无一手资料支撑的纯推断不能立主题页**——放 uncategorized.md 标注「类型：分析推测 / 待资料验证」。
-
-### 回写后必做
-
-每次回写后：
-- 更新 `wiki/_log.md`：追加一条 `[YYYY-MM-DD] 分析回写：来自 #analysis_xxx，新增主题 N 个 / 新增矛盾 K 条 / 验证理论 M 条`
-- 更新 `wiki/_index.md` 的最后更新时间
-- 不要更新 `wiki/_index.md` 的"已处理资料清单"——那是入库进度，不是分析进度
-
-## wiki 页面格式
-
-### 主题页模板（wiki/themes/theme_xxx.md）
-
-```markdown
-# [主题名称]
-
-> 来源类型：资料涌现 / 分析涌现（二选一，分析涌现的主题在头部明确标注）
-
-## 一句话定义
-[这个主题捕捉了什么]
-
-## 证据（来自原始资料，不可篡改）
-> 此栏只放 #interview_xx / #survey_xx / #feedback_xx 等一手资料引用。
-- #interview_01: "[原始引用]" — [观察类型：行为/态度/痛点/积极]
-- #interview_05: "[原始引用]" — [观察类型]
-- ...
-
-## 分析增量（来自侦探分析或对抗审查）
-> 此栏放 #analysis_YYYYMMDD / #review_YYYYMMDD 的涌现内容，与原始证据明确分开。
-- #analysis_20260527: 跨主题关联——[主题B] 中 80% 提到此现象的人也在本主题中出现
-- #review_20260530: 反例——#interview_22 在追问中说了与本主题相反的内容（原入库时漏读）
-- ...
-
-## 频次
-- 提及人数: N/总数
-- 情感强度: 高/中/低（基于用词和描述详细程度）
-
-## 关联主题
-- 与 [主题B] 共现频率高（来源: #analysis_YYYYMMDD）
-- 与 [主题C] 存在矛盾（详见 contradictions.md）
-
-## 理论支撑（如适用）
-- [理论名]（来源: #framework_xx） 预测了此现象 — 验证状态: 已验证 / 待验证 / 被反驳
-
-## 入库与生长历史
-- [日期] 首次创建，基于 #interview_01-#interview_30
-- [日期] 增量更新，新增 #interview_31-#interview_50 的证据
-- [日期] 分析回写 #analysis_YYYYMMDD：发现与 [主题B] 的隐藏关联
-- [日期] 审查回写 #review_YYYYMMDD：补入反例
-```
-
-### 矛盾记录模板（wiki/contradictions.md）
-
-```markdown
-# 矛盾记录
-
-## 矛盾 1: [简要描述]
-- **类型**: 资料内部矛盾 / 分析 vs 反例 / 文献预测 vs 数据
-- **正方**: [观点A] — 来源: #interview_xx, #interview_yy
-- **反方**: [观点B] — 来源: #interview_zz, #interview_ww
-- **可能原因**: [用户分群差异？场景差异？口头vs行为？]
-- **发现时间**: [日期]
-- **发现来源**: 入库时 / #analysis_YYYYMMDD / #review_YYYYMMDD
-
-## 矛盾 2: ...
-```
+archivist 入库时按 wiki 页面格式契约建页;detective/reviewer 回写时按分析回写契约操作。这两份契约是三个 skill 共同遵守的接口,不是 archivist 私有规则。
 
 ## 质量规则
 

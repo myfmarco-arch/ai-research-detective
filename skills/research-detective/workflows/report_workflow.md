@@ -1,0 +1,104 @@
+# 完整报告工作流(report workflow)
+
+适用场景:用户**明确说**"写报告""出报告""生成报告"。
+
+产出形态:**完整研究报告 + 侦探备忘录**(主体)+ A1 + A2(顺带存盘)。
+
+> 这是 detective 两条产出工作流之一,另一条是 [brief_workflow.md](brief_workflow.md)。SKILL.md 步骤 4 根据用户意图路由到这里。
+
+## 1. 产出清单
+
+产出位置以 CONTEXT 速读卡的"产出位置"为准(默认 `outputs/`)。下面提到的路径都是默认值,实际写入路径替换为 CONTEXT 声明的位置。
+
+### 1.1 完整报告(主体)
+
+- 严格按 [../templates/simple_report.md](../templates/simple_report.md) 结构产出。
+- 包含侦探备忘录(盲区扫描、隐藏关联、矛盾审计、证据强度)——可在主报告中分散呈现,但分析必须做。
+- 保存到产出位置(默认 `outputs/<报告名>.md`)。
+
+### 1.2 A1 摘要(顺带存盘)
+
+- 按 [../templates/answer_summary.md](../templates/answer_summary.md) 结构。
+- **控制在 300-500 字**。
+- 保存到产出位置下的 `answer_summary.md`(默认 `outputs/answer_summary.md`)。
+
+### 1.3 A2 证据链图谱(顺带存盘)
+
+- 严格按 [../templates/evidence_chain.md](../templates/evidence_chain.md) 的表格格式。
+- 保存到产出位置下的 `evidence_chain.md`(默认 `outputs/evidence_chain.md`)。
+
+## 2. 报告规范(强制加载,落笔前读)
+
+### 2.1 结构与论证质量
+
+[../guides/report_principles.md](../guides/report_principles.md):三层原则(底线/结构/表达)+ 金字塔原理 + 标准大纲 + **13 项自检清单**。
+
+报告 workflow 必读全文。
+
+### 2.2 句子和措辞
+
+[../guides/writing_style.md](../guides/writing_style.md):心法 5 条 + 红线 10 条 + 自查清单 15 条,专治 AI 写作的概念癌、稻草人、破折号拖腔、N<30 用百分比等套路。
+
+**关键定调**:研究员要敢给观点和建议(鼓励大胆假设),但每条建议必须挂证据锚 + 边界 + 可证伪的下一步——大胆假设、小心求证(详见心法 5、红线 6)。
+
+### 2.3 写作原则
+
+按"回答问题"组织,不按"数据来源"组织。每个发现/结论下面,用户数据、文献、竞品混在一起作为证据支撑,不要分别列"用户怎么说""文献怎么说""竞品怎么做"。结论在前,证据在后。
+
+两份合起来构成报告的完整产出标准。落笔后用 `report_principles.md` 文末的 13 项清单 + `writing_style.md` 的 15 条清单逐条勾选,任一项不过 → 改完再交付。
+
+### 2.4 对照 CONTEXT 的项目级约束
+
+- **身份**:用 CONTEXT 的"我的身份"声明的专业视角判断,每个判断词(重要/严重/边缘/主流等)能用方法学语言解释依据
+- **底线**:产出前对照"速读卡 → 底线"自检,触碰即重写
+- **范围**:引用限定在 CONTEXT 参考资料和 README 入库范围内,超出的外部信息显式标注
+
+## 3. lint(写完跑)
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py outputs/<报告文件>.md
+```
+
+红线(R*)非零必须改完才交付——这是 writing_style.md 红线 1/2/4/5/8/10 的机器化检查,比人眼漏检率低。
+
+黄线(Y*)人工复核:误判可保留,但要写出"为什么这条不算 AI 套路"的一句话理由。
+
+lint 不是替代 13+15 项人工自检,是把"概念癌词组、N<30 用百分比、段内多破折号"这类机械可查的反例先扫掉,让人工审查聚焦在判断层。
+
+## 4. 后续:对抗审查(可选但推荐)
+
+报告形态可以接 `research-reviewer` 做对抗审查(简报形态目前不进入 reviewer)。
+
+### 4.1 何时主动建议
+
+如果本次报告满足以下任一条件,在步骤 6 反馈环节主动告诉用户"建议运行 `research-reviewer` 做对抗性审查再发出":
+
+- 报告将对外发布(向客户、合作方、公众交付)
+- 报告将作为重要决策依据(产品方向、资源投入、组织变更)
+- 核心结论的证据强度有"中"或"弱"档,但承担了"强"档的判断份量
+- 报告中存在矛盾或边界条件,但分析阶段没能彻底排除
+
+低 stake 内部探索可以跳过 reviewer,但**必须显式询问用户是否需要**,不要默默省略。
+
+### 4.2 修订流程
+
+如果 `outputs/review.md` 存在(由 research-reviewer 产出),读取审查结果:
+
+- **confirmed** 的结论不动
+- **weakened** 的结论加限定条件或降低置信度
+- **challenged** 的结论重新审视证据链,必要时修改或删除
+
+### 4.3 修订后的回写(仅 wiki 模式)
+
+如果根据 review 修订了结论,把"修订过程"也回写到 wiki:
+
+- 被弱化或推翻的结论,在对应主题页的「分析增量」栏追加 `#analysis_YYYYMMDD 修正:原结论因 #review_YYYYMMDD 反例被弱化为 [新表述]`
+- 不要删除原来的 `#analysis_xxx` 条目——保留分析演化的轨迹,下次分析能看到"这个判断曾经被推翻过"
+
+回写规则详见 [../../../contracts/analysis_writeback.md](../../../contracts/analysis_writeback.md)。
+
+## 5. 报告形态也可附加 B1
+
+完整报告产出后,如果结论会被下游 AI 工作流消费,同样可以追加 B1 信息包——契约和动作与简报形态完全一致,见 [brief_workflow.md](brief_workflow.md) §2 或直接读 [../../../contracts/information_pack.md](../../../contracts/information_pack.md)。
+
+报告形态生成 B1 时,frontmatter `generated_from.full_report` 指向报告路径(简报形态此字段为 `null`)。

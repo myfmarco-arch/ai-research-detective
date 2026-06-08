@@ -170,7 +170,7 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 
 #### 3f. 回写 wiki（仅 wiki 模式）
 
-侦探分析结束后，把本次分析中**新涌现**的发现回写到 wiki，让 wiki 随每次分析变厚。回写边界和格式遵循 [research-archivist/SKILL.md](../research-archivist/SKILL.md) 的「分析回写」一节。
+侦探分析结束后，把本次分析中**新涌现**的发现回写到 wiki，让 wiki 随每次分析变厚。回写边界和格式遵循 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)（wiki 页面结构见 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)）。
 
 回写来源编号统一用 `#analysis_YYYYMMDD`（YYYYMMDD 为今天日期）。具体执行：
 
@@ -184,40 +184,24 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 
 回写后更新 `wiki/_log.md`，追加一条：`[YYYY-MM-DD] 分析回写 #analysis_YYYYMMDD：新增主题 N / 新增矛盾 K / 验证理论 M`。
 
-### 步骤 4：案件报告
+### 步骤 4：产出形态路由
 
-根据用户意图选择产出模式：
+detective 有**两条产出工作流**,根据用户意图二选一:
 
-**提问模式**（用户问了一个具体问题，没有说"写报告"）：
-- 产出 A1：直接在对话中回答，按 `templates/answer_summary.md` 结构。**控制在 300 字以内，最多不超过 500 字。建议部分必须结合 CONTEXT.md 给出针对性建议。** A1 只在对话中输出，不保存文件。
-- 产出 A2：证据链图谱，**必须严格按 `templates/evidence_chain.md` 的表格格式**（证据节点表 + 关系表 + 强度摘要），保存到 CONTEXT 速读卡声明的"产出位置"下的 `evidence_chain.md`（默认 `outputs/evidence_chain.md`）。不要用自由格式替代。
-- **不产出完整报告，不保存 answer_summary 文件。**
+| 用户意图 | 加载 workflow | 主体产出 |
+| --- | --- | --- |
+| 用户问了一个**具体问题**,没说"写报告" | [workflows/brief_workflow.md](workflows/brief_workflow.md) | A1 + A2(可选追加 B1) |
+| 用户**明确说**"写报告""出报告""生成报告" | [workflows/report_workflow.md](workflows/report_workflow.md) | 完整报告 + 侦探备忘录(顺带存 A1+A2) |
 
-**报告模式**（用户明确说"写报告""出报告""生成报告"）：
-- 产出位置以 CONTEXT 速读卡的"产出位置"为准（默认 `outputs/`）。下面提到的路径都是默认值，实际写入路径替换为 CONTEXT 声明的位置。
-- 产出完整报告，严格按 `templates/simple_report.md` 结构，保存到产出位置（默认 `outputs/`）
-- 产出 A1 摘要，按 `templates/answer_summary.md` 结构，保存到产出位置下的 `answer_summary.md`（默认 `outputs/answer_summary.md`）。**同样控制在 300-500 字。**
-- 产出 A2 证据链图谱，保存到产出位置下的 `evidence_chain.md`（默认 `outputs/evidence_chain.md`）
+判定有歧义时(用户说"帮我整理一下""做个总结"),反问一句:"你想要简报形态(对话回答 + 证据链图谱)还是完整报告(含侦探备忘录、可走对抗审查)?"
 
-**写作原则**：按"回答问题"组织，不按"数据来源"组织。每个发现/结论下面，用户数据、文献、竞品混在一起作为证据支撑，不要分别列"用户怎么说""文献怎么说""竞品怎么做"。结论在前，证据在后。
+**B1 信息包不是独立路由分支**,而是简报 workflow 的可选附加段落(完整报告也可同样追加)。用户说"打个包""给下游 AI 用"时触发,详见 [../../contracts/information_pack.md](../../contracts/information_pack.md)。
 
-**报告规范（强制加载，落笔前读）**：
+**两条 workflow 共用的写作约束**(workflow 内会再次提及):
 
-- [guides/report_principles.md](guides/report_principles.md) — 报告的**结构与论证质量**。三层原则(底线/结构/表达)+ 金字塔原理 + 标准大纲 + 13 项自检清单。报告模式必读，提问模式（A1+A2）至少读一遍底线层。
-- [guides/writing_style.md](guides/writing_style.md) — **句子和措辞**。心法 5 条 + 红线 10 条 + 自查清单，专治 AI 写作的概念癌、稻草人、破折号拖腔、N<30 用百分比等套路。**关键定调：研究员要敢给观点和建议（鼓励大胆假设），但每条建议必须挂证据锚 + 边界 + 可证伪的下一步**——大胆假设、小心求证（详见心法 5、红线 6）。
-
-两份合起来构成报告的完整产出标准。落笔后用 `report_principles.md` 文末的 13 项清单 + `writing_style.md` 的 15 条清单逐条勾选，任一项不过 → 改完再交付。
-
-**对照 CONTEXT 的项目级约束**：
-- **身份**：用 CONTEXT 的"我的身份"声明的专业视角判断，每个判断词（重要/严重/边缘/主流等）能用方法学语言解释依据
-- **底线**：产出前对照"速读卡 → 底线"自检，触碰即重写
-- **范围**：引用限定在 CONTEXT 参考资料和 README 入库范围内，超出的外部信息显式标注
-
-#### 报告内容
-
-报告模式下，按 `templates/simple_report.md` 结构产出完整报告（含侦探备忘录）。提问模式下只产出 A1 + A2。
-
-将报告保存到 CONTEXT 速读卡声明的"产出位置"（默认 `outputs/`）。
+- 写作风格红线/黄线见 [guides/writing_style.md](guides/writing_style.md);写完跑 `${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py`,红线 0 处才能交付。
+- 报告级结构与论证质量见 [guides/report_principles.md](guides/report_principles.md)(报告 workflow 必读,简报 workflow 至少读底线层)。
+- 对照 CONTEXT 的身份/底线/范围,产出前自检。
 
 ### 步骤 5：质量检查
 
@@ -232,6 +216,7 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 
 **B. 报告规范**（落笔后强制对照，任一项不过 → 改完再交付）
 
+- [ ] `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py <报告文件>` **红线 0 处**（黄线人工复核，每条须给出非套路理由）
 - [ ] [guides/report_principles.md](guides/report_principles.md) 文末 **13 项自检清单**全部通过（底线 2 + 结构 7 + 表达 4）
 - [ ] [guides/writing_style.md](guides/writing_style.md) 的**自查清单 15 条**全部通过
 
@@ -247,6 +232,25 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 - [ ] 步骤 3f 已执行：新涌现主题、新矛盾、新关联、理论验证状态、沉默信号已回写到 wiki 对应页面
 - [ ] 回写来源标注为 `#analysis_YYYYMMDD`，写入主题页的「分析增量」栏，未污染「证据」栏
 - [ ] `wiki/_log.md` 已追加本次分析的回写记录
+
+**E. B1 信息包**（仅在生成了 `information_pack_*.md` 时执行）
+
+机器可查（红线，必须 0 处）：
+
+- [ ] `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md` **退出码 0**
+  - 自动覆盖：清理类（C1 残留 HTML 注释 / C2 残留占位符 / C3 frontmatter 必填字段缺失 / C4 specialization 取值非法 / C5-C6 generated_from 嵌套结构）、跨 ID 完整性（I1 引用了未定义的 ID）、结构类（S1-S5 必填章节缺失或为空）
+
+人工复核（语义判断，lint 查不到）：
+
+- [ ] §1.2 负面清单**每条具体**到"不能用于 X 场景/不能外推到 Y 人群"，没有"请谨慎使用"这类废话（lint 只能查非空，查不出空话）
+- [ ] §3.1 用户原声 verbatim 已匿名（无真名/公司/可识别项目），按 `Q-N` 升序排列
+- [ ] §3.2 定量数据：3.2.1 统计口径与方法已填（关键概念定义、抽样方法、显著性检验、已知偏差），3.2.2 每个数据点 N<30 子群用绝对数、比例后跟样本基数
+- [ ] §3.3 文献：保留出处和年份，无大段原文拷贝
+- [ ] §3.4 舆情：聚合后展示模式，含来源 + 样本量 + 时间范围；单条公开发言保留出处链接
+- [ ] §4.1 分群从研究涌现非硬切；§4.2 痛点是合并去重清单不是散标签；§4.3 设计约束按三条判定标准筛过（详见 [../../contracts/information_pack.md](../../contracts/information_pack.md) §4.3）
+- [ ] §5 场景"成功状态"字段具体到可观察的状态变化，不是"用户满意"
+- [ ] §6 反例非空（除非研究真的没找到任何反例，且这一点已在 §1.3 显式说明）
+- [ ] §7 每条 `U-N` 具体到"问什么、怎么补"，不是"建议补做更多研究"
 
 如果检查不通过，回到步骤 3/4 修正。
 
@@ -269,6 +273,7 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
   - 被弱化或推翻的结论，在对应主题页的「分析增量」栏追加 `#analysis_YYYYMMDD 修正：原结论因 #review_YYYYMMDD 反例被弱化为 [新表述]`
   - 不要删除原来的 `#analysis_xxx` 条目——保留分析演化的轨迹，下次分析能看到"这个判断曾经被推翻过"
 - 提供可选延伸：用户画像、机会地图、研究演示
+- **B1 信息包提示**（按需触发，不要默认生成）：如果本次结论会被下游 AI 工作流消费（产品 AI 写 PRD、设计 AI 出方案、战略 AI 做规划），主动提示用户："如果要把这些结论交给下游 AI 用，可以让我打一个 B1 信息包——它不只是原声整理，研究员会先把素材提取成决策切片（用户分群 / 痛点清单 / 设计约束 / 场景成功状态），下游 AI 直接拿去写 PRD/方案/规划，不用自己再做一道'原始证据→行动种子'的转换。同时带负面清单和未解决问题，防止下游 AI 把结论用错或脑补。"用户确认后按 brief workflow §2 的 B1 扩展段落生成（详见 [../../contracts/information_pack.md](../../contracts/information_pack.md)）。
 - 提供后续研究计划建议
 - 根据反馈调整，保存最终版本到 CONTEXT 速读卡声明的"产出位置"（默认 `outputs/`）
 

@@ -1,8 +1,8 @@
 {
   "name": "ai-research-detective",
-  "version": "0.2.1",
-  "description": "侦探方法论研究分析工具集：入库（archivist）+ 分析（detective）+ 对抗审查（reviewer），三个 skill 共享冷启动流程、模板和项目级硬约束。",
+  "version": "0.5.0",
+  "description": "侦探方法论研究分析工具集：入库（archivist）+ 分析（detective，按需产出 B1 信息包给下游 AI 工作流）+ 对抗审查（reviewer），三个 skill 共享冷启动流程、模板、项目级硬约束，以及交付前自动运行的写作风格 lint 和 B1 信息包 lint。",
   "author": {
-    "name": "marco"
+    "name": "myfmarco-arch"
   }
 }
