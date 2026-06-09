@@ -2,6 +2,43 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.7.0] — 2026-06-09
+
+### 改
+
+- `skills/research-detective/SKILL.md` 步骤 5 质量检查从冗长 checklist 精简为 4 道机器强制红线（CONTEXT / 五动作分文件 / 报告风格 / B1 信息包）+ 语义自检引用，可读性和可执行性提升
+- 三个 SKILL.md 的 `description` 字段动词前置，触发词更直接（archivist / detective / reviewer）
+- `.claude-plugin/marketplace.json` 描述重写，突出"分析资料、找隐藏洞察、写可证伪报告"
+
+### 增
+
+- `skills/research-detective/scripts/lint_process.py` 新增红线 `P_NO_ALT_3D`：3d 矛盾审计中每个核心结论至少写一条「替代解释 / 竞争性解释」，避免分析过早收敛（同步更新 fixture 与 `writing_style.md` 自查清单）
+- `skills/research-detective/guides/delivery_checklist.md`：交付前语义层自检清单（A 流程产物 / B 报告规范 / C 侦探方法专属 / D wiki 回写 / E B1 信息包）
+- `RELEASE_CHECKLIST.md`：发版前必跑清单（版本与文档 / plugin-validator / 干净环境冒烟 / 已知失败模式 / tag 发布）
+- `CONTRIBUTING.md`：贡献指南
+
+---
+
+## [0.6.1] — 2026-06-09
+
+### 分析深度三项微调
+
+- **证据强度内联标签**：writing_style.md 新增要求 6——核心结论旁标注 `[N人提及 / M反例 / 跨K类来源]`，自查清单论据层同步加入
+- **异常用户扫描（Anomaly Hunter）**：SKILL.md 步骤 3b 盲区扫描新增"反向找人"段落——完成异常信号识别后，找行为/态度组合与多数人偏差最大的 2-3 个个体，输出完整画像
+- **竞争性解释（必做）**：SKILL.md 步骤 3d 矛盾审计新增硬性要求——每个核心结论至少列 1 条替代解释；`lint_process.py` 新增 `P_NO_ALT_3D` 规则机器校验（检测「替代解释/也可能是/竞争性解释」等关键词）
+
+### 修改
+
+- `skills/research-detective/SKILL.md`：步骤 3b 加 Anomaly Hunter 段落；步骤 3d 加竞争性解释要求；中间产物表 3d 行更新
+- `skills/research-detective/guides/writing_style.md`：报告 prompt 硬约束 [要求] 加第 6 条；自查清单论据层加内联标签项
+- `skills/research-detective/scripts/lint_process.py`：新增 `ALT_EXPLANATION_KEYWORDS` + `P_NO_ALT_3D` 规则
+- `skills/research-detective/scripts/tests/fixture_process_good/3d_contradictions_audit.md`：每个结论补替代解释，适配新 lint
+- `README.md`：新增"Roadmap 与已知局限"章节（跨项目知识图谱 + 组织遗忘检测作为未来方向）
+
+### 测试
+
+- 全部 61 项 detective 测试 + 18 项 shared 测试通过
+
 ## [0.6.0] — 2026-06-09
 
 ### 反幻觉加固层(本版主线)

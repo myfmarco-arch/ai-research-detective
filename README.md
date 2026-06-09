@@ -252,9 +252,15 @@ ai-research-detective/                   # 仓库根 = plugin 根
 >
 > SKILL.md 内用 `../../shared/...` 或 `../../contracts/...` 上溯两级访问。
 
+## Roadmap
+
+**跨项目知识图谱**：当前架构是单项目闭环。多个项目间反复出现的底层机制（掌控感、确定性、身份认同等）每次都要重新发现。下一步：自动提取底层机制关键词到全局索引，让新项目站在历史项目的肩膀上启动。
+
+<!-- 远期：基于跨项目索引做组织遗忘检测——当前发现与历史结论不一致时自动提醒 -->
+
 ## 反馈与贡献
 
-欢迎在 [GitHub Issues](https://github.com/myfmarco-arch/ai-research-detective/issues) 反馈问题、提建议、贡献代码。当前版本见 `.claude-plugin/plugin.json`。
+欢迎在 [GitHub Issues](https://github.com/myfmarco-arch/ai-research-detective/issues) 反馈问题、提建议、贡献代码。贡献流程、测试方法、版本规范见 [CONTRIBUTING.md](CONTRIBUTING.md)。当前版本见 `.claude-plugin/plugin.json`。
 
 ## Acknowledgements
 
