@@ -162,6 +162,39 @@ PACK_NOFM_EXIT=$?
 rm -f "$TMP_NO_FM"
 assert_exit "missing frontmatter exits 2" 2 "$PACK_NOFM_EXIT"
 
+# ---------- 12. lint_process.py: fixture_process_good ----------
+echo ""
+echo "=== 12. lint_process.py · fixture_process_good (期望 PASS) ==="
+PROC_GOOD_OUT=$(python3 skills/research-detective/scripts/lint_process.py skills/research-detective/scripts/tests/fixture_process_good 2>&1)
+PROC_GOOD_EXIT=$?
+assert_exit "process good fixture exits 0" 0 "$PROC_GOOD_EXIT"
+assert_contains "process good fixture says PASS" "PASS" "$PROC_GOOD_OUT"
+
+# ---------- 13. lint_process.py: fixture_process_bad ----------
+echo ""
+echo "=== 13. lint_process.py · fixture_process_bad (期望红线全中) ==="
+PROC_BAD_OUT=$(python3 skills/research-detective/scripts/lint_process.py skills/research-detective/scripts/tests/fixture_process_bad 2>&1)
+PROC_BAD_EXIT=$?
+assert_exit "process bad fixture exits 1" 1 "$PROC_BAD_EXIT"
+for rule in P_THIN_3A P_THIN_3B P_MISSING_3D P_MISSING_3E; do
+    assert_contains "process bad fixture hits $rule" "[$rule" "$PROC_BAD_OUT"
+done
+
+# ---------- 14. lint_process.py: --wiki-mode 仍抓 3b/3d/3e ----------
+echo ""
+echo "=== 14. lint_process.py · bad --wiki-mode (3a 放宽,其他必抓) ==="
+PROC_WIKI_OUT=$(python3 skills/research-detective/scripts/lint_process.py --wiki-mode skills/research-detective/scripts/tests/fixture_process_bad 2>&1)
+PROC_WIKI_EXIT=$?
+assert_exit "wiki-mode bad exits 1 (3b/3d/3e 仍 fail)" 1 "$PROC_WIKI_EXIT"
+assert_contains "wiki-mode 仍抓 3d 缺失" "P_MISSING_3D" "$PROC_WIKI_OUT"
+
+# ---------- 15. lint_process.py: 不存在的目录 ----------
+echo ""
+echo "=== 15. lint_process.py · 不存在的目录 (期望 exit 2) ==="
+PROC_NOEXIST_OUT=$(python3 skills/research-detective/scripts/lint_process.py /tmp/__no_such_process_8881 2>&1)
+PROC_NOEXIST_EXIT=$?
+assert_exit "missing process dir exits 2" 2 "$PROC_NOEXIST_EXIT"
+
 # ---------- 总结 ----------
 echo ""
 echo "=== 总结 ==="

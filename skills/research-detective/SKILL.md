@@ -25,16 +25,16 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 1. 读取 `wiki/_index.md`,了解已有主题、资料量、处理状态
 2. 读取 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**,作为本次分析的前置约束
 3. 读取 `README.md` 的**入库范围、边界与已知局限**,了解材料地图和可信度命门
-4. **CONTEXT 完整性检查**:速读卡(要回答/汇报给/产出形式/产出位置/底线)、我的身份、研究问题(核心问题)五项必须有内容,任一缺失或仍带 `<!-- 待用户补充 -->` 标记,停下来按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程补齐
-5. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 4 项处理(自动复制或追加,先征求用户同意)
+4. **CONTEXT 完整性检查**(机器优先):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(占位符残留 / 必填字段空 / 核心问题 < 20 字)→ 停下来按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程补齐;红线 0 + 有黄线(底线套话 / 填充式动词)→ 提示用户考虑改写,但不阻断
+5. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理(自动复制或追加,先征求用户同意)
 6. 向用户确认研究问题,然后**跳过步骤 2,直接进入步骤 3**(wiki 已完成证据采集)
 
 **情况 B:有 CONTEXT.md + data/ 有内容(但没有 wiki/)**
 
-1. 读取 `CONTEXT.md` 和 `README.md`,执行与情况 A 相同的完整性检查
+1. 读取 `CONTEXT.md` 和 `README.md`,执行与情况 A 相同的完整性检查(含 lint_context.py)
 2. 列出 `data/` 目录,评估资料类型和数量
 3. 如果缺少 `process/` 或 `outputs/`,创建它们
-4. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 4 项处理(自动复制或追加,先征求用户同意)
+4. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理(自动复制或追加,先征求用户同意)
 5. 向用户确认你对研究问题的理解是否正确,然后进入步骤 2
 
 **情况 C/D:没有 CONTEXT.md(C: 有资料文件 / D: 空目录)**
@@ -84,11 +84,29 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 - 用户分群必须从 LLM 的定性阅读中涌现，不能用 Python 关键词硬分
 - 报告中的每条原始引用，必须是 LLM 读过原文后选出的，不是 Python 按关键词抓的
 
-将提取结果保存到 `process/evidence_extraction.md`。
+将提取结果保存到 `process/3a_coding.md`(与步骤 3a 全量记忆编码同一文件,wiki 模式下由 archivist 入库代替本步骤,3a 文件可省)。`batch_N.md` 是分批阅读的临时草稿,合并后归并到 `3a_coding.md`,可保留也可删除。
 
 ### 步骤 3：侦探分析（核心差异化）
 
 在完成基础的主题分析后，执行以下侦探动作。
+
+**强制中间产物结构(机器可验)**:
+
+五个侦探动作 3a-3e 的产物**必须分写入 5 个独立文件**,不能糊在一个 detective_analysis.md 里。这是为了反幻觉 H12(表面合规)——LLM 不能靠"已完成盲区扫描"一句话蒙混过关,机器要能验产物。
+
+| 文件 | 对应动作 | 最低字段(lint_process.py 强制) |
+|---|---|---|
+| `process/3a_coding.md` | 全量记忆编码 | 至少 5 条 `#interview_*` / `#survey_*` 引用(wiki 模式可不存在) |
+| `process/3b_blind_spots.md` | 盲区扫描 | 至少 3 条「低频高强度」/「沉默信号」/「应出现但缺失」(无盲区时显式写「搜了 X、Y、Z 三个角度均未发现」) |
+| `process/3c_associations.md` | 全局关联 | 至少 1 条 N×N 跨主题关联描述(无关联时写「比对了 N 对主题,未发现共变」) |
+| `process/3d_contradictions_audit.md` | 矛盾审计 | 每个核心结论必须写出反面证据或显式「已搜未找到 + 搜了什么」 |
+| `process/3e_evidence_chains.md` | 证据强度 | 每个结论列「支持 X 条 / 反对 Y 条」+ 计数 + 置信度 |
+
+交付前跑:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/        # 非 wiki 模式
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py --wiki-mode process/  # wiki 模式
+```
 
 **执行细节与按需工具(落笔前先读)**:
 
@@ -166,7 +184,7 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 | **高频** | 🔴 最高优先级 | 🟡 体验优化 |
 | **低频** | 🟠 特定分群重要 | ⚪ 记录但降低优先级 |
 
-将分析过程和中间结果保存到 `process/detective_analysis.md`。用户分群应从矛盾审计和关联发现中涌现，不要用关键词硬分。
+中间产物按上面表格分写入 `process/3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md` 五个文件,不要糊在一份 detective_analysis.md 里——分文件让机器 lint 能验产物质量。用户分群应从矛盾审计和关联发现中涌现,不要用关键词硬分。
 
 #### 3f. 回写 wiki（仅 wiki 模式）
 
@@ -207,12 +225,14 @@ detective 有**两条产出工作流**,根据用户意图二选一:
 
 **A. 流程产物**（确保链路完整）
 
-- [ ] `CONTEXT.md` 已创建，包含用户确认的研究问题、身份、底线
-- [ ] 原始资料已整理到 `data/` 目录（wiki 模式下由 research-archivist 完成，跳过）
-- [ ] 中间产物已保存：wiki 模式下检查 `process/detective_analysis.md`；非 wiki 模式下还需检查 `process/evidence_extraction.md`
+- [ ] `CONTEXT.md` 已创建,包含用户确认的研究问题、身份、底线;`lint_context.py` PASS
+- [ ] 原始资料已整理到 `data/` 目录(wiki 模式下由 research-archivist 完成,跳过)
+- [ ] **5 个侦探动作中间产物分文件保存**(机器可验):
+  - 非 wiki 模式: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/` **退出码 0**
+  - wiki 模式: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py --wiki-mode process/` **退出码 0**
 - [ ] 引用标注了参与者类型而非姓名
-- [ ] 已对照 CONTEXT 的"底线"自检，无触碰
-- [ ] 引用限定在 CONTEXT 参考资料和 README 入库范围内，超出的已显式标注
+- [ ] 已对照 CONTEXT 的"底线"自检,无触碰
+- [ ] 引用限定在 CONTEXT 参考资料和 README 入库范围内,超出的已显式标注
 
 **B. 报告规范**（落笔后强制对照，任一项不过 → 改完再交付）
 

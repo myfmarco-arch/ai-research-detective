@@ -55,15 +55,23 @@
 
 ## 3. lint(写完跑)
 
+报告级两件,中间产物一件,都要过:
+
 ```bash
+# 报告写作风格(红线 0 才能交付)
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py outputs/<报告文件>.md
+
+# 侦探动作中间产物齐备(机器验五件套)
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/
+# 或 wiki 模式:
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py --wiki-mode process/
 ```
 
-红线(R*)非零必须改完才交付——这是 writing_style.md 红线 1/2/4/5/8/10 的机器化检查,比人眼漏检率低。
+`lint_report.py` 红线(R*)非零必须改完才交付——这是 writing_style.md 红线 1/2/4/5/8/10 的机器化检查,比人眼漏检率低;黄线(Y*)人工复核,误判可保留,但要写出"为什么这条不算 AI 套路"的一句话理由。
 
-黄线(Y*)人工复核:误判可保留,但要写出"为什么这条不算 AI 套路"的一句话理由。
+`lint_process.py` 退出码 0 才能交付——它验 3a-3e 五个侦探动作产物齐备且字段达标,反幻觉 H12(表面合规),避免 LLM 写"已完成盲区扫描"实际没做。
 
-lint 不是替代 13+15 项人工自检,是把"概念癌词组、N<30 用百分比、段内多破折号"这类机械可查的反例先扫掉,让人工审查聚焦在判断层。
+两个 lint 都不是替代人工自检,是把机械可查的反例先扫掉,让人工审查聚焦在判断层。
 
 ## 4. 后续:对抗审查(可选但推荐)
 

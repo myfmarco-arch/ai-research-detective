@@ -34,6 +34,22 @@
 
 不要因为"用户没明说"就跳过 reviewer——主动告知用户可以做对抗性审查。
 
+### 反幻觉检查链(机器可验,各 skill 必跑)
+
+为对抗 LLM 的引用改写、表面合规、自标自查、随机性这四类幻觉,各阶段都有 lint 脚本兜底。**这些脚本是项目级硬约束,不是可选**:
+
+| 脚本 | 触发位置 | 防御目标 | 必须 exit 0 |
+|---|---|---|---|
+| `shared/scripts/lint_context.py` | cold_start 步骤 4 + 各 skill 步骤 1 | H10/H13 任务漂移 + 空话化(CONTEXT 地基) | 是 |
+| `skills/research-archivist/scripts/verify_quotes.py` | archivist 步骤 5 入库回检 | H3 引用改写(全量校验,从抽 6% → 100%) | 是 |
+| `skills/research-detective/scripts/lint_process.py` | detective 步骤 5 / report_workflow §3 | H12 表面合规(强制 5 个侦探动作分文件留产物) | 是 |
+| `skills/research-detective/scripts/lint_report.py` | detective workflow §3 | 写作风格红线(概念癌、N<30 用百分比、章末金句等) | 是 |
+| `skills/research-reviewer/scripts/lint_review.py` | reviewer 步骤 4 交付检查 | H6 跨角色复核 + H12 搜索记录留足迹 + H1 采样模式声明 | 是 |
+
+reviewer 的核心结论提取**默认走 multi-agent 采样取交集**(3 个独立 subagent → 取交集),token 约 3×。这是少数能从结构上对抗 H1(LLM 推理随机性)的手段——同样输入两次跑结论不同是模型物理特性,prompt 改不动,只能靠多次采样。
+
+低 stake 内部探索可让用户显式说"快速审"降级到单 LLM,但 review.md 必须显式声明模式(`**核心结论筛选模式**: 降级单 LLM(原因:...)`)——这是足迹,LLM 不能默默跳过。
+
 > **方法论命名**:本系列 skill 的入库 + 分析模式参考了 Andrej Karpathy 的 [LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)——把原始资料编译成 LLM 友好的结构化知识库,让分析直接在"编译好的知识"上工作,而非每次重读原文;wiki 随每次分析/审查持续生长。`research-archivist` 是入库执行者,`research-detective` 是知识库上的分析者。
 
 ## 研究产出的质量底线

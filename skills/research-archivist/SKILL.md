@@ -58,13 +58,13 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 1. 读取 `wiki/_index.md`,了解已处理资料和已有主题
 2. 读取 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**——决定本次入库的视角和边界(同样的访谈,研究问题不同时,提取的主题颗粒度不同)
 3. 读取 `README.md` 的**入库范围、边界与已知局限**——避免把范围外的资料混入
-4. **CONTEXT 完整性检查**:速读卡(要回答/汇报给/产出形式/产出位置/底线)、我的身份、研究问题(核心问题)五项必须有内容,任一缺失或仍带 `<!-- 待用户补充 -->` 标记,停下来按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程补齐
-5. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 4 项处理(自动复制或追加,先征求用户同意)
+4. **CONTEXT 完整性检查**(机器优先):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(占位符残留 / 必填字段空 / 核心问题 < 20 字)→ 停下来按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程补齐;红线 0 + 有黄线(底线套话 / 填充式动词)→ 提示用户考虑改写,但不阻断
+5. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理(自动复制或追加,先征求用户同意)
 6. 然后跳到步骤 3
 
 **有 CONTEXT.md 但没有 wiki/**:跳过冷启动。
 
-1. 读取 `CONTEXT.md` 和 `README.md`,执行与"已有 wiki/"分支相同的完整性检查(第 2-4 步)
+1. 读取 `CONTEXT.md` 和 `README.md`,执行与"已有 wiki/"分支相同的完整性检查(第 2-4 步,含 lint_context.py)
 2. 检查项目根 `CLAUDE.md`(同"已有 wiki/"分支的处理)
 3. 创建 wiki 目录结构(见上方"项目结构"),在 `wiki/_index.md` 写入初始信息:资料清单、处理状态、最后更新时间。**研究问题不写在 `_index.md`,引用 `CONTEXT.md` 即可**(单一真源,避免漂移)
 4. 进入步骤 2
@@ -185,17 +185,33 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 
 ### 步骤 5：入库回检（切断"垃圾入,垃圾出"链路）
 
-侦探分析的质量上限取决于 wiki 的入库质量。交付给 detective 之前,**随机抽 3 份原始资料,与 wiki 对照检查**:
+侦探分析的质量上限取决于 wiki 的入库质量。交付给 detective 之前,**先跑机器全量校验,再人工抽查 3 份**:
+
+#### 5a. 机器先查:引用真实性 100% 全量校验(红线)
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-archivist/scripts/verify_quotes.py wiki
+```
+
+脚本扫 `wiki/themes/*.md` 「证据」栏 + `wiki/quotes.md` 中所有 `#interview_xx: "..."` 形态的一手引用,逐条到 `data/<id>.*` 原始资料里子串匹配。改一个字、加一个词、引用了不存在的资料编号都会 fail。
+
+**红线**:exit 0 才算过;非 0 必须修正后再交付,**不允许跳过**。这一步把"引用改写"幻觉从抽查的 6% 覆盖率拉到 100%。
+
+豁免:仅校验「证据」栏的一手引用;「分析增量」栏(`#analysis_*` / `#review_*`)允许改写型摘录,不校验。
+
+#### 5b. 人工抽查 3 份(机器查不到的语义层)
+
+机器只能查"引用真不真",查不出"该归类的有没有归类"。**随机抽 3 份原始资料,与 wiki 对照检查**:
 
 1. **覆盖检查**:这份资料里的关键观察(痛点、积极信号、变通方案、强情感引用),是否都在某个主题页 / `quotes.md` / `uncategorized.md` 中找得到?如果有遗漏,补上。
-2. **来源可追溯**:每个主题页的「证据」栏条目都有 `#interview_xx` 来源编号?引用是原话还是被改写过?发现改写立刻改回原话。
+2. **来源可追溯**:每个主题页的「证据」栏条目都有 `#interview_xx` 来源编号?(机器已查"原话是否被改写";本步查"是否漏标了来源")
 3. **矛盾完整**:这份资料里有没有跟已有主题结论冲突的内容,但没进 `contradictions.md`?入库时漏标的矛盾在这一步补。
 4. **未归类不是偷懒**:翻 `uncategorized.md`,每条问自己"这真的不属于任何已有主题吗?还是我没认真找归属?"——后者归回去,前者保留。
 5. **统计与定性自洽**:`statistics.md` 中的频次和主题页声称的"N 人提到"对得上?对不上是哪边出错?
 
 回检发现的问题就地修正,**不要等到分析阶段再返工**。修正完成后:
 
-- 在 `wiki/_log.md` 追加一条:`[YYYY-MM-DD] 入库回检:抽查 #interview_xx, #interview_yy, #interview_zz,补正 N 条遗漏 / K 条矛盾 / M 条未归类回流`
+- 在 `wiki/_log.md` 追加一条:`[YYYY-MM-DD] 入库回检:verify_quotes 校验 N 条引用全部命中;人工抽查 #interview_xx, #interview_yy, #interview_zz,补正 N 条遗漏 / K 条矛盾 / M 条未归类回流`
 - 告诉用户:
   - "wiki 已就绪并通过回检。共 M 个主题、K 条矛盾、J 条未归类观察。"
   - "可以用 research-detective 进行侦探分析了。"
@@ -212,7 +228,10 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
    - 新证据涌现新主题 → 创建新主题页
    - 已有主题在新资料中完全缺失 → 在 `wiki/uncategorized.md` 标注"沉默信号"
 4. 更新所有索引和统计
-5. **跑一次入库回检**（步骤 5）——增量更新最容易漏标矛盾、漏归类、改写引用，必须回检兜底。抽样范围:**优先抽新增资料 + 被新增资料修改过的旧主题页对应的原始资料**,不是从全量随机抽。`_log.md` 回检记录里写明"增量回检,抽 #interview_xx(新增)+ #interview_yy(因新增触发了主题 Z 的更新)"
+5. **跑一次入库回检**（步骤 5）——增量更新最容易漏标矛盾、漏归类、改写引用,必须回检兜底。
+   - 5a 机器全量校验(`verify_quotes.py`)始终对全量 wiki 跑——无论是新增主题页还是新增证据条目,改写都会被抓
+   - 5b 人工抽查的抽样范围:**优先抽新增资料 + 被新增资料修改过的旧主题页对应的原始资料**,不是从全量随机抽
+   - `_log.md` 回检记录里写明"增量回检:verify_quotes 校验 N 条引用全部命中;抽 #interview_xx(新增)+ #interview_yy(因新增触发了主题 Z 的更新)"
 
 ## 跨 skill 契约
 

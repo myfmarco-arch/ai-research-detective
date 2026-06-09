@@ -216,7 +216,7 @@ archivist 入库阶段让 LLM 逐份读完资料，把原始内容**编译成结
 
 - 首次使用建议先显式 `加载 research-archivist skill` 或 `加载 research-detective skill`，确保 skill 在分析开始前被加载
 - 如果 Claude 没有停下来问研究问题就直接开始分析，提醒它："先问我研究问题是什么"
-- 分析完成后检查 `process/` 目录有没有中间产物（`evidence_extraction.md` / `detective_analysis.md`）
+- 分析完成后检查 `process/` 下五个侦探动作产物齐备:`3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md`（wiki 模式 3a 可省）。也可以直接跑 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/` 让脚本一次性检查
 
 ## 项目结构
 
@@ -231,16 +231,21 @@ ai-research-detective/                   # 仓库根 = plugin 根
 ├── shared/                              # 三个 skill 共用资源（不是 skill）
 │   ├── CLAUDE.md                        # 项目级硬约束
 │   ├── cold_start.md                    # 冷启动流程
-│   └── templates/                       # CONTEXT.md / README.md 模板
+│   ├── templates/                       # CONTEXT.md / README.md 模板
+│   └── scripts/                         # 跨 skill lint(lint_context.py) + tests
 └── skills/                              # Claude Code 自动发现的 skill
-    ├── research-archivist/SKILL.md
+    ├── research-archivist/
+    │   ├── SKILL.md
+    │   └── scripts/                     # verify_quotes.py（wiki 引用全量校验）+ tests
     ├── research-detective/
     │   ├── SKILL.md                     # 通用流程 + 步骤 4 路由到 workflow
     │   ├── workflows/                   # brief / report 两条产出工作流
     │   ├── guides/                      # 侦探方法论 + 26 工具箱 + 写作规范
     │   ├── templates/                   # 报告 / A1 / A2 / B1 模板
-    │   └── scripts/                     # 两个 lint + 测试套件
-    └── research-reviewer/SKILL.md
+    │   └── scripts/                     # lint_report / lint_information_pack / lint_process + tests
+    └── research-reviewer/
+        ├── SKILL.md
+        └── scripts/                     # lint_review.py（搜索记录 + 证据强度复核 + 采样模式）+ tests
 ```
 
 > **shared/ vs contracts/**：`shared/` 是流程资源（模板、起手式），用户复制后会改；`contracts/` 是接口规范（跨 skill / 跨边界的协议），所有 skill 共同遵守不能各自改。
