@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: 对研究分析报告的核心结论做对抗性验证——主动搜索反面证据，尝试推翻结论。当用户说"审查报告""检查结论""review"或需要对分析结果做质量把关时使用。
+description: 审查研究报告、对抗性验证结论、找反面证据推翻结论。对核心结论做质量把关——主动搜证据反驳，确认/弱化/推翻每条结论。当用户说"审查报告/检查结论/review"或要对分析结果做质量把关时使用。
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 ---
 

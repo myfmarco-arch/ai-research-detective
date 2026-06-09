@@ -1,6 +1,6 @@
 ---
 name: research-detective
-description: 基于侦探方法论的研究分析助手——利用 LLM 的完美记忆和无偏差全局扫描能力，对访谈记录、问卷数据、用户反馈执行元分析，系统性发现人类研究员因认知和记忆局限而遗漏的洞察。当用户有研究资料需要深度分析、需要发现隐藏关联和认知盲区、需要撰写或修改研究报告、需要根据审查结果修订结论时使用。
+description: 分析研究资料、写或修订研究报告、找隐藏洞察。对访谈记录、问卷数据、用户反馈做侦探式元分析——发现盲区、隐藏关联、矛盾，给可证伪的结论。当用户有研究资料要深度分析、要发现隐藏关联和认知盲区、要撰写/修改研究报告、要依据审查结果修订结论时使用。
 allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 ---
 
@@ -223,56 +223,35 @@ detective 有**两条产出工作流**,根据用户意图二选一:
 
 ### 步骤 5：质量检查
 
-**A. 流程产物**（确保链路完整）
+**红线（机器强制，全部 exit 0 才能交付）**：
 
-- [ ] `CONTEXT.md` 已创建,包含用户确认的研究问题、身份、底线;`lint_context.py` PASS
-- [ ] 原始资料已整理到 `data/` 目录(wiki 模式下由 research-archivist 完成,跳过)
-- [ ] **5 个侦探动作中间产物分文件保存**(机器可验):
-  - 非 wiki 模式: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/` **退出码 0**
-  - wiki 模式: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py --wiki-mode process/` **退出码 0**
-- [ ] 引用标注了参与者类型而非姓名
-- [ ] 已对照 CONTEXT 的"底线"自检,无触碰
-- [ ] 引用限定在 CONTEXT 参考资料和 README 入库范围内,超出的已显式标注
+```bash
+# CONTEXT 质量
+python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md
 
-**B. 报告规范**（落笔后强制对照，任一项不过 → 改完再交付）
+# 5 个侦探动作分文件（非 wiki 模式去掉 --wiki-mode）
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py [--wiki-mode] process/
 
-- [ ] `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py <报告文件>` **红线 0 处**（黄线人工复核，每条须给出非套路理由）
-- [ ] [guides/report_principles.md](guides/report_principles.md) 文末 **13 项自检清单**全部通过（底线 2 + 结构 7 + 表达 4）
-- [ ] [guides/writing_style.md](guides/writing_style.md) 的**自查清单 15 条**全部通过
+# 报告写作风格
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py <报告文件>
 
-**C. 侦探方法专属**（本 skill 的差异化价值，不能跳）
+# B1 信息包（仅生成了 information_pack_*.md 时跑）
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
+```
 
-- [ ] 已对照 [guides/research_methodology.md](guides/research_methodology.md) 完成五个侦探动作（3a 全量记忆编码 / 3b 盲区扫描 / 3c 全局关联 / 3d 矛盾审计 / 3e 证据强度评估），不是只套了报告模板
-- [ ] 侦探备忘录已完成（盲区扫描、隐藏关联、矛盾审计、证据强度）——可在主报告中分散呈现，但分析必须做
-- [ ] 反面证据已穿插进每个核心发现，不是只集中在备忘录或附录
-- [ ] 已知样本偏差在受影响的发现旁用 ⚠ 标注，不只放附录免责
+任一红线非 0 → 改完再交付，**不允许跳过**。
 
-**D. wiki 回写**（仅 wiki 模式，让 wiki 随分析生长）
+**自检（语义层，机器查不到）**：
 
-- [ ] 步骤 3f 已执行：新涌现主题、新矛盾、新关联、理论验证状态、沉默信号已回写到 wiki 对应页面
-- [ ] 回写来源标注为 `#analysis_YYYYMMDD`，写入主题页的「分析增量」栏，未污染「证据」栏
-- [ ] `wiki/_log.md` 已追加本次分析的回写记录
+落笔后对照 [guides/delivery_checklist.md](guides/delivery_checklist.md) 逐条勾选，覆盖：
 
-**E. B1 信息包**（仅在生成了 `information_pack_*.md` 时执行）
+- A 流程产物（引用规范、底线对照、范围限定）
+- B 报告规范（[report_principles.md](guides/report_principles.md) 13 项 + [writing_style.md](guides/writing_style.md) 15 项）
+- C 侦探方法专属（五动作完整、备忘录、反面证据穿插、偏差标注）
+- D wiki 回写（仅 wiki 模式）
+- E B1 信息包（仅生成时）
 
-机器可查（红线，必须 0 处）：
-
-- [ ] `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md` **退出码 0**
-  - 自动覆盖：清理类（C1 残留 HTML 注释 / C2 残留占位符 / C3 frontmatter 必填字段缺失 / C4 specialization 取值非法 / C5-C6 generated_from 嵌套结构）、跨 ID 完整性（I1 引用了未定义的 ID）、结构类（S1-S5 必填章节缺失或为空）
-
-人工复核（语义判断，lint 查不到）：
-
-- [ ] §1.2 负面清单**每条具体**到"不能用于 X 场景/不能外推到 Y 人群"，没有"请谨慎使用"这类废话（lint 只能查非空，查不出空话）
-- [ ] §3.1 用户原声 verbatim 已匿名（无真名/公司/可识别项目），按 `Q-N` 升序排列
-- [ ] §3.2 定量数据：3.2.1 统计口径与方法已填（关键概念定义、抽样方法、显著性检验、已知偏差），3.2.2 每个数据点 N<30 子群用绝对数、比例后跟样本基数
-- [ ] §3.3 文献：保留出处和年份，无大段原文拷贝
-- [ ] §3.4 舆情：聚合后展示模式，含来源 + 样本量 + 时间范围；单条公开发言保留出处链接
-- [ ] §4.1 分群从研究涌现非硬切；§4.2 痛点是合并去重清单不是散标签；§4.3 设计约束按三条判定标准筛过（详见 [../../contracts/information_pack.md](../../contracts/information_pack.md) §4.3）
-- [ ] §5 场景"成功状态"字段具体到可观察的状态变化，不是"用户满意"
-- [ ] §6 反例非空（除非研究真的没找到任何反例，且这一点已在 §1.3 显式说明）
-- [ ] §7 每条 `U-N` 具体到"问什么、怎么补"，不是"建议补做更多研究"
-
-如果检查不通过，回到步骤 3/4 修正。
+任一项不过 → 回到步骤 3/4 修正。
 
 ### 步骤 6：反馈与迭代
 

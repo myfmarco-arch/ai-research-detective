@@ -1,6 +1,6 @@
 ---
 name: research-archivist
-description: 将研究资料（访谈记录、问卷数据、用户反馈）增量入库为结构化 wiki 知识库，为 research-detective 侦探分析提供"编译好的知识"。当用户有新的研究资料需要处理、需要将原始数据整理成可分析的知识库、或提到"入库""处理资料""更新 wiki"时使用。
+description: 入库研究资料、整理原始数据成可分析知识库、更新 wiki。把访谈记录、问卷、用户反馈增量入库为结构化 wiki，为 research-detective 侦探分析提供"编译好的知识"。当用户有新研究资料要处理、要把原始数据整理成可分析知识库、提到"入库/处理资料/更新 wiki"时使用。
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 ---
 
