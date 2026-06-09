@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: 审查研究报告、对抗性验证结论、找反面证据推翻结论。对核心结论做质量把关——主动搜证据反驳，确认/弱化/推翻每条结论。当用户说"审查报告/检查结论/review"或要对分析结果做质量把关时使用。
+description: 审查研究报告、对抗性验证结论、找反面证据推翻结论。对核心结论做质量把关——主动搜证据反驳，确认/弱化/推翻每条结论。当用户说"审查报告/检查结论/review"或要对分析结果做质量把关时使用。**被唤起后第一步永远是步骤 1 环境门禁：定位 CONTEXT.md + 报告文件并跑 CONTEXT 完整性检查；缺任一则停下来问用户，绝不自己 cold-start 或凭空审查。**
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 ---
 
@@ -23,9 +23,11 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 
 ## 工作流程
 
-### 步骤 1：定位输入
+### 步骤 1：定位输入（环境门禁，不可跳过）
 
-检测当前目录，找到需要审查的材料：
+> **这是硬门禁，不是建议。** reviewer 审查的是**已完成的报告**，因此它的门禁与 archivist/detective 相反：**不 cold-start、不补 CONTEXT、不替用户造研究语境**。缺料就停下来问，绝不凭空开审——没有靶子的审查是空审查。
+
+检测当前目录，定位需要审查的材料：
 
 - `CONTEXT.md` 的**速读卡（产出位置 / 底线）、我的身份、研究问题** —— 决定去哪里找报告、按什么红线审、用什么专业视角对抗
 - `README.md` 的**入库范围、边界与已知局限** —— 决定证据可追溯的边界
@@ -33,9 +35,9 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 - `wiki/` 目录（如果存在，用于搜索反面证据）
 - `data/` 目录（原始资料，用于回溯验证）
 
-**CONTEXT 完整性检查**(机器先查):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(必填字段空 / 核心问题 < 20 字 / 占位符残留)→ 停下来反馈用户;CONTEXT 不达标会让审查失去靶子,审查也是空的。
+**CONTEXT 完整性检查**(机器先查，红线阻断):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(必填字段空 / 核心问题 < 20 字 / 占位符残留)→ **停下来反馈用户**;CONTEXT 不达标会让审查失去靶子,审查也是空的。
 
-如果找不到 CONTEXT.md 或报告文件，**停下来问用户**要审查哪份报告、对应的项目语境在哪。
+**门禁通过判定**：只有 ⓐ 找到 CONTEXT.md 且 lint 红线为 0、ⓑ 找到待审报告文件 两项都满足才能进入步骤 2。**找不到 CONTEXT.md 或报告文件 → 停下来问用户**要审查哪份报告、对应的项目语境在哪，不要自己跑 cold_start 生成 CONTEXT。
 
 ### 步骤 2:提取核心结论(multi-agent 采样取交集,对抗 H1 随机性)
 

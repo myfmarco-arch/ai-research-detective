@@ -1,6 +1,6 @@
 ---
 name: research-archivist
-description: 入库研究资料、整理原始数据成可分析知识库、更新 wiki。把访谈记录、问卷、用户反馈增量入库为结构化 wiki，为 research-detective 侦探分析提供"编译好的知识"。当用户有新研究资料要处理、要把原始数据整理成可分析知识库、提到"入库/处理资料/更新 wiki"时使用。
+description: 入库研究资料、整理原始数据成可分析知识库、更新 wiki。把访谈记录、问卷、用户反馈增量入库为结构化 wiki，为 research-detective 侦探分析提供"编译好的知识"。当用户有新研究资料要处理、要把原始数据整理成可分析知识库、提到"入库/处理资料/更新 wiki"时使用。**被唤起后第一步永远是步骤 1 环境门禁：检查 CONTEXT.md / README.md / CLAUDE.md 是否就位，缺失则先走 cold_start 配置（生成 CONTEXT/README、配置 CLAUDE.md），严禁未初始化就直接读 data/ 入库。**
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 ---
 
@@ -49,32 +49,28 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 
 ## 工作流程
 
-### 步骤 1：初始化
+### 步骤 1：初始化（环境门禁，不可跳过）
 
-检测当前目录状态,自动适配。**在进入步骤 2 之前,必须确保你已经理解了研究问题和入库边界。**
+> **这是硬门禁，不是建议。** 被唤起后，无论用户多急、`data/` 里是否已有资料，你**必须先走完本步**再决定下一步。**严禁**看到 `data/` 有内容就默认"增量更新"直接跳到步骤 3 入库——跳过门禁 = 本次入库作废。门禁的目的：进入步骤 2 之前，确保你已理解研究问题、入库边界，且 CONTEXT / README / CLAUDE.md 三件套就位。
 
-**已有 wiki/**:这是增量更新。
+**① 探测目录状态**——检查 `CONTEXT.md`（研究背景/问题，单一真源）、`README.md`（入库范围/边界/局限）、项目根 `CLAUDE.md`（项目级硬约束）、`wiki/`（已有知识库）是否存在。
 
-1. 读取 `wiki/_index.md`,了解已处理资料和已有主题
-2. 读取 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**——决定本次入库的视角和边界(同样的访谈,研究问题不同时,提取的主题颗粒度不同)
-3. 读取 `README.md` 的**入库范围、边界与已知局限**——避免把范围外的资料混入
-4. **CONTEXT 完整性检查**(机器优先):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(占位符残留 / 必填字段空 / 核心问题 < 20 字)→ 停下来按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程补齐;红线 0 + 有黄线(底线套话 / 填充式动词)→ 提示用户考虑改写,但不阻断
-5. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理(自动复制或追加,先征求用户同意)
-6. 然后跳到步骤 3
+**② 按下表对号入座**（CONTEXT × wiki 的有无覆盖全部四种状态，这是初始化分支的唯一真源）：
 
-**有 CONTEXT.md 但没有 wiki/**:跳过冷启动。
+| `CONTEXT.md` | `wiki/` | 判定 | 动作 |
+|---|---|---|---|
+| 无 | 无 | **首次入库** | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 初稿 → 一次性请用户补齐 → 合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许读 data/ 做提取** |
+| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | 停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 补齐 CONTEXT/README，再做③④ |
+| 有 | 无 | **已配置未入库** | 跳过冷启动，做③④ |
+| 有 | 有 | **增量更新** | 跳过冷启动，做③（读 `wiki/_index.md` 了解已处理资料和主题）+ ④ |
 
-1. 读取 `CONTEXT.md` 和 `README.md`,执行与"已有 wiki/"分支相同的完整性检查(第 2-4 步,含 lint_context.py)
-2. 检查项目根 `CLAUDE.md`(同"已有 wiki/"分支的处理)
-3. 创建 wiki 目录结构(见上方"项目结构"),在 `wiki/_index.md` 写入初始信息:资料清单、处理状态、最后更新时间。**研究问题不写在 `_index.md`,引用 `CONTEXT.md` 即可**(单一真源,避免漂移)
-4. 进入步骤 2
+**③ 完整性检查（凡 `CONTEXT.md` 已存在就必跑，红线阻断）**：
+- 读 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**——决定本次入库的视角和颗粒度（同样的访谈，研究问题不同，提取的主题颗粒度不同）；读 `README.md` 的**入库范围与边界**——避免范围外资料混入
+- 跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
+- 检查项目根 `CLAUDE.md`：缺失或非本 skill 版本 → 按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理（自动复制或追加，先征求用户同意）
 
-**没有 wiki/ 也没有 CONTEXT.md**:这是首次入库。按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程生成 CONTEXT.md 和 README.md(扫项目 → 生成初稿 → 一次性请用户补齐 → 合并写入,**含 CLAUDE.md 自动配置**)。CONTEXT/README 模板在 [../../shared/templates/](../../shared/templates/)。
-
-冷启动结束后,本 skill 额外做:
-
-- 创建 wiki 目录结构(见上方"项目结构")
-- 在 `wiki/_index.md` 写入初始信息:资料清单、处理状态、最后更新时间
+**④ 门禁通过判定 + 建库**——只有 ⓐ CONTEXT.md 存在且 lint 红线为 0、ⓑ README.md 存在、ⓒ 项目根 CLAUDE.md 就位 三项全满足才算通过；任一不满足不得进入步骤 2。通过后：
+- 若 `wiki/` 不存在（首次入库 / 已配置未入库 / 异常态补齐后）：建 wiki 目录结构（见上方"项目结构"），在 `wiki/_index.md` 写入初始信息（资料清单、处理状态、最后更新时间；**研究问题不写在此，引用 `CONTEXT.md`**，单一真源避免漂移）
 - 进入步骤 2
 
 ### 步骤 2：资料评估

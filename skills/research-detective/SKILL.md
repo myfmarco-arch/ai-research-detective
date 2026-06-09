@@ -1,6 +1,6 @@
 ---
 name: research-detective
-description: 分析研究资料、写或修订研究报告、找隐藏洞察。对访谈记录、问卷数据、用户反馈做侦探式元分析——发现盲区、隐藏关联、矛盾，给可证伪的结论。当用户有研究资料要深度分析、要发现隐藏关联和认知盲区、要撰写/修改研究报告、要依据审查结果修订结论时使用。
+description: 分析研究资料、写或修订研究报告、找隐藏洞察。对访谈记录、问卷数据、用户反馈做侦探式元分析——发现盲区、隐藏关联、矛盾，给可证伪的结论。当用户有研究资料要深度分析、要发现隐藏关联和认知盲区、要撰写/修改研究报告、要依据审查结果修订结论时使用。**被唤起后第一步永远是步骤 1 环境门禁：检查 CONTEXT.md / README.md / CLAUDE.md 是否就位，缺失则先走 cold_start 配置，严禁未理解研究问题就直接分析。**
 allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 ---
 
@@ -16,35 +16,27 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 
 ## 工作流程
 
-### 步骤 1：案件建档
+### 步骤 1：案件建档（环境门禁，不可跳过）
 
-检测当前目录状态,自动适配。**在进入步骤 2 之前,必须确保你已经理解了研究问题。**
+> **这是硬门禁，不是建议。** 被唤起后，无论用户多急、`data/` 里是否已有资料，你**必须先走完本步**再决定下一步。**严禁**未理解研究问题、未确认 CONTEXT/README/CLAUDE 就位就直接进入证据采集或分析。门禁的目的：进入步骤 2/3 之前，确保你已理解研究问题，且三件套就位。
 
-**情况 A:有 wiki/ 目录(由 research-archivist skill 创建)**
+**① 探测目录状态**——检查 `CONTEXT.md`（研究背景/问题，单一真源）、`README.md`（入库范围/边界/局限）、项目根 `CLAUDE.md`（项目级硬约束）、`wiki/`（archivist 已建的知识库）是否存在。
 
-1. 读取 `wiki/_index.md`,了解已有主题、资料量、处理状态
-2. 读取 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**,作为本次分析的前置约束
-3. 读取 `README.md` 的**入库范围、边界与已知局限**,了解材料地图和可信度命门
-4. **CONTEXT 完整性检查**(机器优先):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(占位符残留 / 必填字段空 / 核心问题 < 20 字)→ 停下来按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程补齐;红线 0 + 有黄线(底线套话 / 填充式动词)→ 提示用户考虑改写,但不阻断
-5. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理(自动复制或追加,先征求用户同意)
-6. 向用户确认研究问题,然后**跳过步骤 2,直接进入步骤 3**(wiki 已完成证据采集)
+**② 按下表对号入座**（CONTEXT × wiki 的有无覆盖全部状态，这是建档分支的唯一真源）：
 
-**情况 B:有 CONTEXT.md + data/ 有内容(但没有 wiki/)**
+| `CONTEXT.md` | `wiki/` | 判定 | 动作 |
+|---|---|---|---|
+| 无 | 无 | **冷启动**（C: `data/` 有资料文件 / D: 空目录） | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 初稿 → 一次性请用户补齐 → 合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许开始分析**；C 情况把识别到的资料移入 `data/`（征求确认），D 情况提示用户放入资料 |
+| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | **不要跑 cold_start 重建**——已有 archivist 建好的知识库。停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 流程**只补齐 CONTEXT/README**（不动 wiki），再做③④ |
+| 有 | 有 | **wiki 模式** | 做③④。读 `wiki/_index.md` 了解已有主题、资料量、处理状态。证据采集已由 archivist 完成，向用户确认研究问题后**跳过步骤 2，直接进入步骤 3** |
+| 有 | 无 | **裸资料模式** | 做③④。列出 `data/` 评估资料类型和数量，缺 `process/` / `outputs/` 则创建，向用户确认研究问题后进入步骤 2 |
 
-1. 读取 `CONTEXT.md` 和 `README.md`,执行与情况 A 相同的完整性检查(含 lint_context.py)
-2. 列出 `data/` 目录,评估资料类型和数量
-3. 如果缺少 `process/` 或 `outputs/`,创建它们
-4. 检查项目根 `CLAUDE.md`:缺失或非本 skill 版本时,按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理(自动复制或追加,先征求用户同意)
-5. 向用户确认你对研究问题的理解是否正确,然后进入步骤 2
+**③ 完整性检查（凡 `CONTEXT.md` 已存在就必跑，红线阻断）**：
+- 读 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**作为本次分析的前置约束；读 `README.md` 的**入库范围、边界与已知局限**了解材料地图和可信度命门
+- 跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
+- 检查项目根 `CLAUDE.md`：缺失或非本 skill 版本 → 按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理（自动复制或追加，先征求用户同意）
 
-**情况 C/D:没有 CONTEXT.md(C: 有资料文件 / D: 空目录)**
-
-按 [../../shared/cold_start.md](../../shared/cold_start.md) 流程生成 CONTEXT.md 和 README.md(扫项目 → 生成初稿 → 一次性请用户补齐 → 合并写入)。CONTEXT/README 模板在 [../../shared/templates/](../../shared/templates/)。
-
-冷启动结束后,本 skill 额外做:
-
-- 情况 C:将识别到的资料移入 `data/`(征求用户确认);情况 D:提示用户放入资料
-- **等资料就位后**,再进入步骤 2
+**④ 门禁通过判定**——只有 ⓐ CONTEXT.md 存在且 lint 红线为 0、ⓑ README.md 存在、ⓒ 项目根 CLAUDE.md 就位 三项全满足，且已向用户确认研究问题，才算通过；任一不满足不得进入步骤 2/3。
 
 ### 步骤 2：证据采集
 
