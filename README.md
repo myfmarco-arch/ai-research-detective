@@ -1,5 +1,7 @@
 # AI Research Detective 🔍
 
+[English](README_en.md) · **中文**
+
 基于**侦探方法论（Detective Method）**的 AI 研究分析工具。利用 LLM 的完美记忆和无偏差全局扫描能力，在定性定量分析的基础上做人类研究员做不到的元分析。
 
 A research analysis toolkit powered by the **Detective Method** — a meta-analysis paradigm that leverages LLM's perfect memory and unbiased global scanning to complement human researchers' cognitive limitations.
@@ -223,7 +225,7 @@ archivist 入库阶段让 LLM 逐份读完资料，把原始内容**编译成结
 ```text
 ai-research-detective/                   # 仓库根 = plugin 根
 ├── .claude-plugin/                      # plugin 元信息（plugin.json + marketplace.json）
-├── README.md / LICENSE
+├── README.md / README_en.md / LICENSE
 ├── contracts/                           # 跨 skill / 跨边界共享契约
 │   ├── wiki_format.md                   # wiki 页面格式
 │   ├── analysis_writeback.md            # 分析回写规则
