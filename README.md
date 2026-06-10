@@ -2,9 +2,9 @@
 
 [English](README_en.md) · **中文**
 
-基于**侦探方法论（Detective Method）**的 AI 研究分析工具。利用 LLM 的完美记忆和无偏差全局扫描能力，在定性定量分析的基础上做人类研究员做不到的元分析。
+基于**侦探方法论（Detective Method）**的 AI 研究分析工具。利用 LLM 更稳定的长程记忆辅助和更系统的全局扫描能力，在定性定量分析的基础上补上人类研究员容易遗漏的元分析层。
 
-A research analysis toolkit powered by the **Detective Method** — a meta-analysis paradigm that leverages LLM's perfect memory and unbiased global scanning to complement human researchers' cognitive limitations.
+A research analysis toolkit powered by the **Detective Method** — a meta-analysis paradigm that uses LLMs for more stable long-range memory support and more systematic global scanning to complement human researchers' cognitive limitations.
 
 本仓库是一个 [**Claude Code plugin**](https://docs.claude.com/en/docs/claude-code/plugins)（Claude Code 的扩展机制，把多个协作的 skill 打包成可一键安装的工具集）。
 

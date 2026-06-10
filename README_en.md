@@ -2,7 +2,7 @@
 
 **English** · [中文](README.md)
 
-An AI research analysis toolkit powered by the **Detective Method** — a meta-analysis paradigm that leverages an LLM's perfect memory and unbiased global scanning to do what human researchers can't, on top of standard qualitative and quantitative analysis.
+An AI research analysis toolkit powered by the **Detective Method** — a meta-analysis paradigm that uses LLMs for more stable long-range memory support and more systematic global scanning to complement standard qualitative and quantitative analysis.
 
 This repository is a [**Claude Code plugin**](https://docs.claude.com/en/docs/claude-code/plugins) — Claude Code's extension mechanism that packages several collaborating skills into a one-click installable toolkit.
 
