@@ -185,7 +185,7 @@ For full research reports, playing the "fact-checker" role:
 
 - Filters core conclusions by the standard "**if overturned, the report fails**" (≤3 conclusions per batch for a deep review; multi-topic reports are reviewed in batches)
 - Doesn't just read the existing report — **actively searches for counter-evidence** — reading the wiki's contradiction pages, uncategorized pages, and quotes, and spot-checking back to the raw material
-- Rules each conclusion: **confirmed** (survives the adversary) / **weakened** (needs qualifying conditions) / **challenged** (may be wrong)
+- Rules each conclusion: confirmed (survives the adversary) / weakened (needs qualifying conditions) / challenged (may be wrong)
 - The detective revises accordingly; weakened or overturned judgments are written back to the wiki's "analysis increment" column, tagged `#review_YYYYMMDD`, **preserving the evolution of judgment**
 
 The brief form (A1+A2) currently doesn't go through reviewer. The report form is strongly recommended for external publication, decision-making, or when evidence strength is in doubt.
