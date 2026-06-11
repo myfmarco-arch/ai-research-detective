@@ -1,7 +1,11 @@
 ---
 name: research-archivist
-description: 入库研究资料、整理原始数据成可分析知识库、更新 wiki。把访谈记录、问卷、用户反馈增量入库为结构化 wiki，为 research-detective 侦探分析提供"编译好的知识"。当用户有新研究资料要处理、要把原始数据整理成可分析知识库、提到"入库/处理资料/更新 wiki"时使用。**被唤起后第一步永远是步骤 1 环境门禁：检查 CONTEXT.md / README.md / CLAUDE.md 是否就位，缺失则先走 cold_start 配置（生成 CONTEXT/README、配置 CLAUDE.md），严禁未初始化就直接读 data/ 入库。**
-allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
+description: Use this skill when the user asks to ingest, organize, archive, or update research source materials, wiki pages, evidence packs, or information packs.
+when_to_use: Trigger on requests such as 入库, 资料整理, 更新 wiki, 生成信息包, 整理访谈/文档/素材, 建立研究资料库. Do not use for report writing, conclusion synthesis, or adversarial review.
+argument-hint: [source-path]
+arguments: [source_path]
+disable-model-invocation: true
+allowed-tools: [Read, Grep, Glob, AskUserQuestion]
 ---
 
 # 研究知识入库助手（Archivist）
@@ -11,6 +15,10 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 > **方法论出处**：本 skill 采用 **LLM_wiki** 方法论（基于 Andrej Karpathy 的 [llm-wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) 在研究分析场景的特化）——把原始资料编译成 LLM 友好的结构化知识库，让后续分析直接在"编译好的知识"上工作，而不是每次重读原文；wiki 随每次分析/审查持续生长。
 
 这个 wiki 是为 `research-detective` 侦探分析 skill 准备的——侦探在 wiki 上工作，不需要回到原始资料。你的入库质量直接决定侦探分析的质量。
+
+## 直接调用参数
+
+如果用户用 `/research-archivist $source_path` 调用,先把 `$source_path` 当作本次待入库材料或目录候选。必须先验证路径存在并说明将处理的范围;路径不存在或含义不清时停下来问。即使提供了路径,也不能跳过步骤 1 环境门禁。
 
 ## 核心原则
 
@@ -59,14 +67,14 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 
 | `CONTEXT.md` | `wiki/` | 判定 | 动作 |
 |---|---|---|---|
-| 无 | 无 | **首次入库** | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 初稿 → 一次性请用户补齐 → 合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许读 data/ 做提取** |
-| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | 停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 补齐 CONTEXT/README，再做③④ |
+| 无 | 无 | **首次入库** | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 待确认草案 → 一次性请用户补齐并校对 → 用户确认后合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许读 data/ 做提取** |
+| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | 停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 补齐 CONTEXT/README（同样先展示草案、用户确认后再写入），再做③④ |
 | 有 | 无 | **已配置未入库** | 跳过冷启动，做③④ |
 | 有 | 有 | **增量更新** | 跳过冷启动，做③（读 `wiki/_index.md` 了解已处理资料和主题）+ ④ |
 
 **③ 完整性检查（凡 `CONTEXT.md` 已存在就必跑，红线阻断）**：
 - 读 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**——决定本次入库的视角和颗粒度（同样的访谈，研究问题不同，提取的主题颗粒度不同）；读 `README.md` 的**入库范围与边界**——避免范围外资料混入
-- 跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
+- 跑 `python3 ${CLAUDE_SKILL_DIR}/../../shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
 - 检查项目根 `CLAUDE.md`：缺失或非本 skill 版本 → 按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理（自动复制或追加，先征求用户同意）
 
 **④ 门禁通过判定 + 建库**——只有 ⓐ CONTEXT.md 存在且 lint 红线为 0、ⓑ README.md 存在、ⓒ 项目根 CLAUDE.md 就位 三项全满足才算通过；任一不满足不得进入步骤 2。通过后：
@@ -186,7 +194,7 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 #### 5a. 机器先查:引用真实性 100% 全量校验(红线)
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-archivist/scripts/verify_quotes.py wiki
+python3 ${CLAUDE_SKILL_DIR}/scripts/verify_quotes.py wiki
 ```
 
 脚本扫 `wiki/themes/*.md` 「证据」栏 + `wiki/quotes.md` 中所有 `#interview_xx: "..."` 形态的一手引用,逐条到 `data/<id>.*` 原始资料里子串匹配。改一个字、加一个词、引用了不存在的资料编号都会 fail。

@@ -1,6 +1,7 @@
 <!--
 研究报告骨架 · 填写约束指向 guides/report_principles.md
 落笔前先读: guides/report_principles.md(结构与论证) + guides/writing_style.md(措辞)
+研究目标 / 支持决策 / 目标读者必须来自已确认的 CONTEXT 或 report_workflow 的报告需求澄清,不得由 AI 自行脑补。
 落笔后用 report_principles.md 文末的 13 项自检清单逐条勾选
 -->
 

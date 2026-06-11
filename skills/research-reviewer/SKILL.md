@@ -1,7 +1,10 @@
 ---
 name: research-reviewer
-description: 审查研究报告、对抗性验证结论、找反面证据推翻结论。对核心结论做质量把关——主动搜证据反驳，确认/弱化/推翻每条结论。当用户说"审查报告/检查结论/review"或要对分析结果做质量把关时使用。**被唤起后第一步永远是步骤 1 环境门禁：定位 CONTEXT.md + 报告文件并跑 CONTEXT 完整性检查；缺任一则停下来问用户，绝不自己 cold-start 或凭空审查。**
-allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
+description: Use this skill when the user asks to review, critique, validate, or quality-check a research report for unsupported claims, weak evidence, missing citations, or overconfident conclusions.
+when_to_use: Trigger on requests such as 审稿, 检查报告, 挑问题, 验证结论, 找幻觉, 找反面证据, 看证据是否支撑. Do not use for writing, revising, or ingesting research materials.
+argument-hint: [report-path]
+arguments: [report_path]
+allowed-tools: [Read, Grep, Glob, AskUserQuestion, Agent]
 ---
 
 # 对抗性审查员
@@ -21,6 +24,12 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 
 绝对不做：建议怎么改、提供替代方案、重写内容、说"可以考虑..."
 
+## 直接调用参数与执行方式
+
+如果用户用 `/research-reviewer $report_path` 调用,先把 `$report_path` 当作候选待审报告。必须验证文件存在;不存在或未提供时,从 `CONTEXT.md` 速读卡的产出位置和 `outputs/` 中寻找候选,仍不确定就问用户。
+
+本 skill 整体保持 inline 执行,不要把整个 reviewer 设置为 `context: fork`:主会话负责定位输入、调度多轮独立 subagent、合并取交集和输出审查结论。只在步骤 2 的核心结论提取、必要的反证复核中使用独立 subagent。
+
 ## 工作流程
 
 ### 步骤 1：定位输入（环境门禁，不可跳过）
@@ -35,7 +44,7 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 - `wiki/` 目录（如果存在，用于搜索反面证据）
 - `data/` 目录（原始资料，用于回溯验证）
 
-**CONTEXT 完整性检查**(机器先查，红线阻断):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(必填字段空 / 核心问题 < 20 字 / 占位符残留)→ **停下来反馈用户**;CONTEXT 不达标会让审查失去靶子,审查也是空的。
+**CONTEXT 完整性检查**(机器先查，红线阻断):跑 `python3 ${CLAUDE_SKILL_DIR}/../../shared/scripts/lint_context.py CONTEXT.md`——红线非 0(必填字段空 / 核心问题 < 20 字 / 占位符残留)→ **停下来反馈用户**;CONTEXT 不达标会让审查失去靶子,审查也是空的。
 
 **门禁通过判定**：只有 ⓐ 找到 CONTEXT.md 且 lint 红线为 0、ⓑ 找到待审报告文件 两项都满足才能进入步骤 2。**找不到 CONTEXT.md 或报告文件 → 停下来问用户**要审查哪份报告、对应的项目语境在哪，不要自己跑 cold_start 生成 CONTEXT。
 
@@ -236,8 +245,8 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 - [ ] 是否存在报告中有但证据中没有的结论？（越界推断检查）
 - [ ] 措辞强度是否与证据强度匹配？（"几乎确定"是否真的有充分证据？）
 - [ ] 判断词（重要/严重/边缘/主流等）是否能用 CONTEXT 声明的"我的身份"对应的方法学语言解释？
-- [ ] **跑一次 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py <报告文件>`**：红线 0 处？黄线已逐条人工复核给出非套路理由？输出（红线/黄线计数 + 命中行号）粘贴到本节作为证据。lint 覆盖 17 条机器可查规则（11 红 6 黄），按 5 层组织——完整对照见 [writing_style.md 第七节](../research-detective/guides/writing_style.md)。论证层（建议悬空 / 标题非 finding / 稻草人 / 同义词堆叠 / 用户语气倾向 / 论证层春秋笔法）仍需人工对照
-- [ ] **跑一次 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-reviewer/scripts/lint_review.py outputs/review.md`**:**退出码 0** 才能交付。验:每个结论的「**搜索记录**」段、confirmed 的 3 轮 + 2 编号门槛、weakened/challenged 的「**反面证据**」段、整文档的「证据强度复核」表 + 「重标依据」列非空——这是反幻觉 H12(留足迹)+ H6(跨角色复核)的机器化检查
+- [ ] **跑一次 `python3 ${CLAUDE_SKILL_DIR}/../research-detective/scripts/lint_report.py <报告文件>`**：红线 0 处？黄线已逐条人工复核给出非套路理由？输出（红线/黄线计数 + 命中行号）粘贴到本节作为证据。lint 覆盖 17 条机器可查规则（11 红 6 黄），按 5 层组织——完整对照见 [writing_style.md 第七节](../research-detective/guides/writing_style.md)。论证层（建议悬空 / 标题非 finding / 稻草人 / 同义词堆叠 / 用户语气倾向 / 论证层春秋笔法）仍需人工对照
+- [ ] **跑一次 `python3 ${CLAUDE_SKILL_DIR}/scripts/lint_review.py outputs/review.md`**:**退出码 0** 才能交付。验:每个结论的「**搜索记录**」段、confirmed 的 3 轮 + 2 编号门槛、weakened/challenged 的「**反面证据**」段、整文档的「证据强度复核」表 + 「重标依据」列非空——这是反幻觉 H12(留足迹)+ H6(跨角色复核)的机器化检查
 - [ ] 报告是否真的执行了 [research-detective/guides/research_methodology.md](../research-detective/guides/research_methodology.md) 的五个侦探动作（全量记忆编码 / 盲区扫描 / 全局关联 / 矛盾审计 / 证据强度评估），还是只套了报告模板？任一动作没落地（如全报告无反面证据 = 矛盾审计缺失，无样本偏差标注 = 盲区扫描缺失）即标 ❌ 并指出缺失的动作
 
 ## 附加发现（可选）

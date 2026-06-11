@@ -29,7 +29,7 @@
 ### 1.4 lint(写完跑)
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py outputs/evidence_chain.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_report.py outputs/evidence_chain.md
 ```
 
 A1 因为只在对话输出,不进 lint 体检——但 A1 用词同样要遵守红线(尤其禁词组、N<30 用百分比、概念癌)。
@@ -57,7 +57,7 @@ A1+A2 已完成。没有结论就没有包可打。
 ### 2.4 lint(生成完跑)
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
 ```
 
 红线 0 处才能交付。详见契约 §7。

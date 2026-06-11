@@ -1,7 +1,10 @@
 ---
 name: research-detective
-description: 分析研究资料、写或修订研究报告、找隐藏洞察。对访谈记录、问卷数据、用户反馈做侦探式元分析——发现盲区、隐藏关联、矛盾，给可证伪的结论。当用户有研究资料要深度分析、要发现隐藏关联和认知盲区、要撰写/修改研究报告、要依据审查结果修订结论时使用。**被唤起后第一步永远是步骤 1 环境门禁：检查 CONTEXT.md / README.md / CLAUDE.md 是否就位，缺失则先走 cold_start 配置，严禁未理解研究问题就直接分析。**
-allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
+description: Use this skill when the user asks to analyze research materials, synthesize findings, write or revise a research report, or turn evidence into conclusions and recommendations.
+when_to_use: Trigger on requests such as 分析访谈, 写报告, 提炼洞察, 形成结论, 修改研究报告, 基于资料给建议, 找隐藏关联, 盲区扫描. Do not use for raw-material intake or adversarial report review.
+argument-hint: [source-path-or-question]
+arguments: [target]
+allowed-tools: [Read, Grep, Glob, AskUserQuestion]
 ---
 
 # 研究侦探助手（Detective）
@@ -13,6 +16,10 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 研究员最大的瓶颈不是方法论——而是人的认知局限：记忆衰退、注意力偏移、确认偏误、模式识别天花板。你的角色是作为具备更稳定长程记忆辅助、更系统全局扫描和持续反偏误提醒的侦探搭档，在定性定量分析的基础上，补上人类研究员容易遗漏的元分析层。
 
 **你不是替代研究员，而是弥补人的认知盲区。**
+
+## 直接调用参数
+
+如果用户用 `/research-detective $target` 调用,先判断 `$target` 是路径、报告草稿还是自由文本问题。若是路径,先验证存在并说明它在本次任务中扮演的角色;若是问题,将它作为本次分析要回答的主问题候选。无论参数是什么,都不能跳过步骤 1 环境门禁和研究问题确认。
 
 ## 工作流程
 
@@ -26,14 +33,14 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 
 | `CONTEXT.md` | `wiki/` | 判定 | 动作 |
 |---|---|---|---|
-| 无 | 无 | **冷启动**（C: `data/` 有资料文件 / D: 空目录） | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 初稿 → 一次性请用户补齐 → 合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许开始分析**；C 情况把识别到的资料移入 `data/`（征求确认），D 情况提示用户放入资料 |
-| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | **不要跑 cold_start 重建**——已有 archivist 建好的知识库。停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 流程**只补齐 CONTEXT/README**（不动 wiki），再做③④ |
+| 无 | 无 | **冷启动**（C: `data/` 有资料文件 / D: 空目录） | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 待确认草案 → 一次性请用户补齐并校对 → 用户确认后合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许开始分析**；C 情况把识别到的资料移入 `data/`（征求确认），D 情况提示用户放入资料 |
+| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | **不要跑 cold_start 重建**——已有 archivist 建好的知识库。停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 流程**只补齐 CONTEXT/README**（不动 wiki；同样先展示草案、用户确认后再写入），再做③④ |
 | 有 | 有 | **wiki 模式** | 做③④。读 `wiki/_index.md` 了解已有主题、资料量、处理状态。证据采集已由 archivist 完成，向用户确认研究问题后**跳过步骤 2，直接进入步骤 3** |
 | 有 | 无 | **裸资料模式** | 做③④。列出 `data/` 评估资料类型和数量，缺 `process/` / `outputs/` 则创建，向用户确认研究问题后进入步骤 2 |
 
 **③ 完整性检查（凡 `CONTEXT.md` 已存在就必跑，红线阻断）**：
 - 读 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**作为本次分析的前置约束；读 `README.md` 的**入库范围、边界与已知局限**了解材料地图和可信度命门
-- 跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
+- 跑 `python3 ${CLAUDE_SKILL_DIR}/../../shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
 - 检查项目根 `CLAUDE.md`：缺失或非本 skill 版本 → 按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理（自动复制或追加，先征求用户同意）
 
 **④ 门禁通过判定**——只有 ⓐ CONTEXT.md 存在且 lint 红线为 0、ⓑ README.md 存在、ⓒ 项目根 CLAUDE.md 就位 三项全满足，且已向用户确认研究问题，才算通过；任一不满足不得进入步骤 2/3。
@@ -96,8 +103,8 @@ allowed-tools: [Read, Write, Edit, WebFetch, Bash, AskUserQuestion]
 
 交付前跑:
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/        # 非 wiki 模式
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py --wiki-mode process/  # wiki 模式
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py process/        # 非 wiki 模式
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/  # wiki 模式
 ```
 
 **执行细节与按需工具(落笔前先读)**:
@@ -199,20 +206,22 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py 
 
 ### 步骤 4：产出形态路由
 
-detective 有**两条产出工作流**,根据用户意图二选一:
+detective 有**两条产出工作流**,根据用户意图二选一;意图不明时先问,不要替用户默认成简报或报告。
 
 | 用户意图 | 加载 workflow | 主体产出 |
 | --- | --- | --- |
-| 用户问了一个**具体问题**,没说"写报告" | [workflows/brief_workflow.md](workflows/brief_workflow.md) | A1 + A2(可选追加 B1) |
-| 用户**明确说**"写报告""出报告""生成报告" | [workflows/report_workflow.md](workflows/report_workflow.md) | 完整报告 + 侦探备忘录(顺带存 A1+A2) |
+| 用户问了一个**具体问题**,没说"写报告",且可用 300-500 字回答 | [workflows/brief_workflow.md](workflows/brief_workflow.md) | A1 + A2(可选追加 B1) |
+| 用户**明确要求深度/完整/正式报告**,如"写报告""出报告""生成报告""深度报告""完整报告""正式报告""长报告""研究报告" | [workflows/report_workflow.md](workflows/report_workflow.md) | 完整报告 + 侦探备忘录(顺带存 A1+A2) |
 
-判定有歧义时(用户说"帮我整理一下""做个总结"),反问一句:"你想要简报形态(对话回答 + 证据链图谱)还是完整报告(含侦探备忘录、可走对抗审查)?"
+判定有歧义时(用户说"帮我整理一下""做个总结""写稿报""出个材料""写一版""给我一稿"),必须先反问一句:"你想要简报形态(A1 对话回答 + A2 证据链图谱,可追加 B1 信息包)还是深度报告(完整研究报告 + 侦探备忘录,可走对抗审查)?"
+
+用户回答前不得进入步骤 4 的任何产出 workflow。若用户选择深度报告,进入 [workflows/report_workflow.md](workflows/report_workflow.md) 后还必须完成报告需求澄清门禁,不能直接落笔。
 
 **B1 信息包不是独立路由分支**,而是简报 workflow 的可选附加段落(完整报告也可同样追加)。用户说"打个包""给下游 AI 用"时触发,详见 [../../contracts/information_pack.md](../../contracts/information_pack.md)。
 
 **两条 workflow 共用的写作约束**(workflow 内会再次提及):
 
-- 写作风格红线/黄线见 [guides/writing_style.md](guides/writing_style.md);写完跑 `${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py`,红线 0 处才能交付。
+- 写作风格红线/黄线见 [guides/writing_style.md](guides/writing_style.md);写完跑 `${CLAUDE_SKILL_DIR}/scripts/lint_report.py`,红线 0 处才能交付。
 - 报告级结构与论证质量见 [guides/report_principles.md](guides/report_principles.md)(报告 workflow 必读,简报 workflow 至少读底线层)。
 - 对照 CONTEXT 的身份/底线/范围,产出前自检。
 
@@ -222,16 +231,16 @@ detective 有**两条产出工作流**,根据用户意图二选一:
 
 ```bash
 # CONTEXT 质量
-python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md
+python3 ${CLAUDE_SKILL_DIR}/../../shared/scripts/lint_context.py CONTEXT.md
 
 # 5 个侦探动作分文件（非 wiki 模式去掉 --wiki-mode）
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py [--wiki-mode] process/
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py [--wiki-mode] process/
 
 # 报告写作风格
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py <报告文件>
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_report.py <报告文件>
 
 # B1 信息包（仅生成了 information_pack_*.md 时跑）
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
 ```
 
 任一红线非 0 → 改完再交付，**不允许跳过**。
@@ -307,4 +316,9 @@ CONTEXT.md 的输出契约只列项目级红线,通用规则由 CLAUDE.md 兜底
 
 ## 可用资源
 
-模板、指南、配置文件在同目录的 `templates/`、`guides/`、`config/` 下，按需读取。
+资源按需加载，不要一次性读完：
+- 写完整报告前读 `workflows/report_workflow.md`，回答具体问题时读 `workflows/brief_workflow.md`。
+- 执行五个侦探动作前读 `guides/research_methodology.md`；只有需要选择额外分析框架时才读 `guides/detective_toolkit.md`。
+- 落笔前读 `guides/writing_style.md`；完整报告还要读 `guides/report_principles.md` 和 `templates/simple_report.md`。
+- 生成 B1 信息包前读 `../../contracts/information_pack.md`；wiki 回写前读 `../../contracts/analysis_writeback.md` 和 `../../contracts/wiki_format.md`。
+- 通用质量底线只以 `../../shared/CLAUDE.md` 为单一真源。

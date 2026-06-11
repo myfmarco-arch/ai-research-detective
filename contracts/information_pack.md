@@ -111,7 +111,7 @@ B1 是独立快照,生成后不与 wiki 实时同步。frontmatter 必填:
 模板里大量交叉引用(F-N → Q-N,P-N → G-N,CON-N → Q-N,C-N → F-N 和 G-N)。生成完毕后必须验证"被引用的 ID 真实存在"——这是机器可查的:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
+python3 ${CLAUDE_SKILL_DIR}/../research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
 ```
 
 lint 检查:

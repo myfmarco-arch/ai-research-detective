@@ -84,7 +84,7 @@ ln -s "$(pwd)" ~/.claude/plugins/ai-research-detective
 
 安装后，三个 skill 会被 Claude Code 自动发现，通过描述匹配触发——"帮我把访谈入库"激活 archivist、"分析一下用户访谈"激活 detective、"审查这份报告"激活 reviewer。也可显式说 `加载 research-detective skill` 强制加载。
 
-> 项目级 `CLAUDE.md`（研究产出质量底线）由各 skill 在冷启动时**自动从 plugin 内 `shared/CLAUDE.md` 复制到你的研究项目根**——不需要手动操作。
+> 项目级 `CLAUDE.md`（研究产出质量底线）由各 skill 在冷启动时引导配置：Claude 会先说明将从 plugin 内 `shared/CLAUDE.md` 复制或追加到研究项目根，得到用户确认后再写入。
 
 ## 使用
 
@@ -218,7 +218,7 @@ archivist 入库阶段让 LLM 逐份读完资料，把原始内容**编译成结
 
 - 首次使用建议先显式 `加载 research-archivist skill` 或 `加载 research-detective skill`，确保 skill 在分析开始前被加载
 - 如果 Claude 没有停下来问研究问题就直接开始分析，提醒它："先问我研究问题是什么"
-- 分析完成后检查 `process/` 下五个侦探动作产物齐备:`3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md`（wiki 模式 3a 可省）。也可以直接跑 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/` 让脚本一次性检查
+- 分析完成后检查 `process/` 下五个侦探动作产物齐备:`3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md`（wiki 模式 3a 可省）。也可以直接跑 `python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py process/`（在 `research-detective` skill 内） 让脚本一次性检查
 
 ## 项目结构
 

@@ -1,10 +1,29 @@
 # 完整报告工作流(report workflow)
 
-适用场景:用户**明确说**"写报告""出报告""生成报告"。
+适用场景:用户**明确要求深度/完整/正式报告**,如"写报告""出报告""生成报告""深度报告""完整报告""正式报告""长报告""研究报告"。
 
 产出形态:**完整研究报告 + 侦探备忘录**(主体)+ A1 + A2(顺带存盘)。
 
 > 这是 detective 两条产出工作流之一,另一条是 [brief_workflow.md](brief_workflow.md)。SKILL.md 步骤 4 根据用户意图路由到这里。
+
+## 0. 报告需求澄清门禁(落笔前必做)
+
+> **这是深度报告的硬门禁。** 进入 report workflow 不等于可以直接写报告。除非 `CONTEXT.md` 已经清楚记录并经用户确认过以下信息,否则必须先停下,用一轮集中问题和用户确认研究细节。
+
+动笔前至少确认:
+
+1. **核心问题与辅助问题**:这份报告最终要回答哪一个主问题?哪些问题只是附带回答?
+2. **用户假设**:用户目前倾向相信什么?想验证、推翻或比较哪些假设?
+3. **目标读者与使用场景**:谁会读?读完要开会、决策、对外发送、还是内部探索?
+4. **支持的决策**:报告要帮助决定什么具体行动,而不是泛泛"了解情况"?
+5. **深度与篇幅**:短报告 / 中等深度 / 长报告;是否需要执行摘要、图表、附录、方法说明?
+6. **资料边界**:只能用项目内资料,还是可以补外部资料?哪些资料可信度低或不能引用?
+7. **不可触碰内容**:术语、立场、客户敏感点、不能下的结论或必须保留的限定。
+8. **输出要求**:文件名、产出位置、语言、读者偏好的结构或已有参考稿。
+
+如果用户只说"按你判断写"也要先复述你的理解,列出上述 8 项的默认假设,请用户确认或修改。用户确认前,不得写完整报告正文;最多只能给报告大纲/研究问题澄清草案。
+
+确认后,把关键信息同步到 `CONTEXT.md` 的"研究细节确认"或相关字段(如需修改文件,先说明将更新哪些字段),再进入产出清单。
 
 ## 1. 产出清单
 
@@ -59,12 +78,12 @@
 
 ```bash
 # 报告写作风格(红线 0 才能交付)
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py outputs/<报告文件>.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_report.py outputs/<报告文件>.md
 
 # 侦探动作中间产物齐备(机器验五件套)
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py process/
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py process/
 # 或 wiki 模式:
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_process.py --wiki-mode process/
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/
 ```
 
 `lint_report.py` 红线(R*)非零必须改完才交付——这是 writing_style.md 红线 1/2/4/5/8/10 的机器化检查,比人眼漏检率低;黄线(Y*)人工复核,误判可保留,但要写出"为什么这条不算 AI 套路"的一句话理由。
