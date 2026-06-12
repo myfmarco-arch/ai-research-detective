@@ -142,4 +142,4 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_information_pack.py outputs/information
 - 需要选择额外分析框架时，才加载 [guides/detective_toolkit.md](guides/detective_toolkit.md)；不要默认全跑 26 个工具。
 - 落笔前读 [guides/writing_style.md](guides/writing_style.md)；完整报告还要读 [guides/report_principles.md](guides/report_principles.md) 和 [templates/simple_report.md](templates/simple_report.md)。
 - 生成 B1 信息包前读 [../../contracts/information_pack.md](../../contracts/information_pack.md)；wiki 回写前读 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md) 和 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)。
-- 通用质量底线只以 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 为单一真源。
+- 通用研究规则只以 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 的 `Research Rules` 为单一真源。

@@ -72,4 +72,4 @@ allowed-tools: [Read, Grep, Glob, AskUserQuestion]
 - 创建或编辑 wiki 页、处理回写边界、检查主题命名时：加载 [guides/wiki_quality_rules.md](guides/wiki_quality_rules.md)。
 - wiki 页面格式遵循 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)。
 - detective/reviewer 分析回写遵循 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)。
-- 通用方法学红线只以 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 为单一真源。
+- 通用研究规则只以 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 的 `Research Rules` 为单一真源。

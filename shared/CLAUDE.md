@@ -1,136 +1,29 @@
-# 项目规则
+# CLAUDE.md
 
-> 本文件是研究分析项目的硬约束。放在研究项目根目录,Claude 会自动加载。
-> 三个 skill(`research-archivist`、`research-detective`、`research-reviewer`)的工作流定义在各自 SKILL.md,本文件只写**跨 skill 的协作规则**和**研究产出的质量底线**。
+## Operating Principles
 
-## 必读前置
+- **Reuse before reinventing**: check existing tools, packages, and patterns before creating or installing new ones. Prefer mature, proven solutions; only build from scratch when nothing suitable exists.
+- **Confirm the result, not the action**: verify that the outcome is correct, not just that the command ran. Finish the loop — no partial progress.
+- **Lead with the result**: don't dump internal trial-and-error. Surface tradeoffs only when a real decision is needed.
 
-### 必须加载 skill 的场景
+## Research Rules
 
-- 涉及研究资料入库、处理、更新 wiki → 加载 `research-archivist`
-- 涉及研究分析、撰写报告、修改报告、根据审查修订 → 加载 `research-detective`
-- 涉及审查报告、验证结论、review → 加载 `research-reviewer`
+Apply these rules by default in all research tasks unless I say otherwise.
 
-**不要在没有加载对应 skill 的情况下执行上述操作。** skill 里有写作规范、模板结构、质量检查清单,不加载会导致产出不符合标准。
+1. **Do not present uncertainty as fact.**
+   If evidence is weak, incomplete, indirect, or missing, say so clearly.
 
-### 启动前必读
+2. **Read the material before judging.**
+   Review context, source material, and definitions before forming conclusions.
 
-任何分析、报告、审查动作开始前,先读:
+3. **Match conclusion strength to evidence strength.**
+   Strong claims require strong evidence; weak signals only support limited conclusions.
 
-- `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线** —— 产出契约的硬约束
-- `README.md` 的**入库范围、边界与已知局限** —— 决定引用边界和可信度
-- `wiki/_index.md` 的**主题列表与处理状态**(不是摘要)—— 判断证据覆盖度。无 wiki 时改读 `data/` 文件清单
+4. **Separate fact, observation, interpretation, and recommendation.**
+   Keep the reasoning chain visible and do not blur categories.
 
-**没有 CONTEXT.md 时**:不要硬开始分析。先问用户研究问题、用户在本项目里的身份("我的身份")、目标读者、底线;或扫项目目录生成草稿让用户一次性确认。不读 CONTEXT 直接产出 = 默认违反视角约束。
+5. **Surface counterevidence, limits, and unknowns.**
+   Point out conflicts, exceptions, boundaries, and open questions.
 
-### 推荐工作流
-
-`research-archivist` 入库 → `research-detective` 分析 → `research-reviewer` 审查 → `research-detective` 修订。
-
-**例外**:
-
-- 资料量小(≤50 份):可跳过 wiki,直接用 detective 做证据采集 + 分析
-- reviewer 审查可选但强烈推荐;高 stake 报告(对外发布、决策依据)必须做
-
-不要因为"用户没明说"就跳过 reviewer——主动告知用户可以做对抗性审查。
-
-### 反幻觉检查链(机器可验,各 skill 必跑)
-
-为对抗 LLM 的引用改写、表面合规、自标自查、随机性这四类幻觉,各阶段都有 lint 脚本兜底。**这些脚本是项目级硬约束,不是可选**:
-
-| 脚本 | 触发位置 | 防御目标 | 必须 exit 0 |
-|---|---|---|---|
-| `shared/scripts/lint_context.py` | cold_start 步骤 4 + 各 skill 步骤 1 | H10/H13 任务漂移 + 空话化(CONTEXT 地基) | 是 |
-| `skills/research-archivist/scripts/verify_quotes.py` | archivist 步骤 5 入库回检 | H3 引用改写(全量校验,从抽 6% → 100%) | 是 |
-| `skills/research-detective/scripts/lint_process.py` | detective 步骤 5 / report_workflow §3 | H12 表面合规(强制 5 个侦探动作分文件留产物) | 是 |
-| `skills/research-detective/scripts/lint_report.py` | detective workflow §3 | 写作风格红线(概念癌、N<30 用百分比、章末金句等) | 是 |
-| `skills/research-reviewer/scripts/lint_review.py` | reviewer 步骤 4 交付检查 | H6 跨角色复核 + H12 搜索记录留足迹 + H1 采样模式声明 | 是 |
-
-reviewer 的核心结论提取**默认走 multi-agent 采样取交集**(3 个独立 subagent → 取交集),token 约 3×。这是少数能从结构上对抗 H1(LLM 推理随机性)的手段——同样输入两次跑结论不同是模型物理特性,prompt 改不动,只能靠多次采样。
-
-低 stake 内部探索可让用户显式说"快速审"降级到单 LLM,但 review.md 必须显式声明模式(`**核心结论筛选模式**: 降级单 LLM(原因:...)`)——这是足迹,LLM 不能默默跳过。
-
-> **方法论命名**:本系列 skill 的入库 + 分析模式参考了 Andrej Karpathy 的 [LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)——把原始资料编译成 LLM 友好的结构化知识库,让分析直接在"编译好的知识"上工作,而非每次重读原文;wiki 随每次分析/审查持续生长。`research-archivist` 是入库执行者,`research-detective` 是知识库上的分析者。
-
-## 研究产出的质量底线
-
-> 本节是三个 skill 共用的方法学红线,**单一真源**。各 SKILL.md 不再复述这些规则,只列项目级红线和 skill 专属规则。
-
-### 1. 不把不确定当事实
-
-证据弱、不全、间接、缺失时,显式说明。不要为了报告"看起来完整"硬给结论。
-
-数据覆盖度不足以支撑某类结论时,明确告知:
-
-> "现有资料中关于 X 的样本只有 2 条,不足以判断 Y。建议补充 X 类访谈后再下结论。"
-
-### 2. 看完材料再下判断
-
-分析前必须实际读完(不是只看摘要):
-
-- 相关访谈/问卷的原文片段
-- CONTEXT.md 的研究问题与底线
-- 已有的同主题分析(避免重复造结论)
-
-### 3. 结论强度匹配证据强度
-
-每个结论必须带证据强度标记:
-
-- **强**:多源交叉验证(≥3 个独立来源,且来源类型不同,如访谈 + 问卷 + 行为数据)
-- **中**:多个相同来源类型佐证(如 3+ 条独立访谈一致)
-- **弱**:单条访谈、单次观察、间接推断
-- **无**:逻辑推演但无直接证据
-
-强结论需要强证据。单条访谈不构成强证据。
-
-### 4. 分清 事实 / 观察 / 解读 / 建议
-
-报告中四者**必须分段或分章节**,不能混在同一段落:
-
-- **事实(fact)**:可直接引用、可验证
-- **观察(observation)**:多个事实归纳出的模式
-- **解读(interpretation)**:基于观察推断的原因或意义
-- **建议(recommendation)**:基于解读给出的行动方向
-
-每条解读必须能追溯到具体的事实/观察。每条引用必须标具体来源(访谈编号、问卷题号等)。
-
-### 5. 主动列反面证据
-
-每个核心结论必须主动列出至少一条:
-
-- 反例(已观察到的不一致案例)
-- 或"如果这个结论错了,会是因为什么"
-- 或边界条件(在什么情况下结论不成立)
-
-`research-reviewer` 是兜底,不是替代——detective 阶段就要做。
-
-### 6. 优化判断与决策,不是文字打磨
-
-报告优先回答:**什么重要、为什么重要、接下来做什么**。
-不要为了"读起来顺"删减证据链或淡化矛盾。
-
-### 7. 优先级纪律
-
-所有结论显式给出优先级或重要程度,不允许平铺。报告交付前先归类、再排优先级、再写结论——不允许把粗加工的清单平铺给汇报对象。
-
-### 8. 定量纪律
-
-定量结论同时给绝对值 + 百分比 + 样本量。**n<30 或分群后样本过小时,禁止做百分比推断**(用绝对数表述,如"5/12 位用户")。宽口径和窄口径分开汇报,不混用。
-
-### 9. 概念诚实
-
-方法名、概念名要诚实——不让"主题归纳"听起来像"统计结论",不让"专家判断"听起来像"用户验证",不给非标准方法贴标准方法的标签。
-
-### 10. 写作风格——去 AI 味
-
-报告落笔前后,对照 `research-detective` skill 内的 `guides/writing_style.md` 红线/黄线自检(加载该 skill 后即可读取)。这份规范堵的是 AI 写作的典型套路:概念癌词组(「结构性 X」「X 悖论」)、稻草人否定(「不是 X,而是 Y」)、破折号拖腔(「——而 / ——但」)、N<30 用百分比、章节标题同构、凑整齐的数字标题、章末金句收尾等。
-
-研究员不会这么写,看到就删。
-
-## 项目特有工作原则
-
-- **先扫再问**:研究问题/项目背景不明确时,先扫项目目录和已有文件生成初稿,再请用户**一次性**补齐空白字段,不要扔空白问题让用户从零回答
-- **不要最小化侦探动作**:盲区扫描、矛盾审计、全局关联发现是本项目的核心价值,即使报告需要简洁,这些步骤也不能跳过——可以在 `process/` 留中间产物,在主报告里精炼呈现
-- **结论在前**:报告和回答都以结论/结果开头,证据和过程在后
-- **确认结果而非动作**:完成分析后告诉用户"发现了什么",不是"我执行了哪些步骤"
-- **产出位置**:CONTEXT.md 速读卡的"产出位置"是单一真源;无 CONTEXT 时默认产出到 `outputs/`,中间产物到 `process/`
+6. **Optimize for judgment and decisions, not polished wording.**
+   Prioritize what matters, why it matters, and what to do next.

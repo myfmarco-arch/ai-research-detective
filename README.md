@@ -84,7 +84,7 @@ ln -s "$(pwd)" ~/.claude/plugins/ai-research-detective
 
 安装后，三个 skill 会被 Claude Code 自动发现，通过描述匹配触发——"帮我把访谈入库"激活 archivist、"分析一下用户访谈"激活 detective、"审查这份报告"激活 reviewer。也可显式说 `加载 research-detective skill` 强制加载。
 
-> 项目级 `CLAUDE.md`（研究产出质量底线）由各 skill 在冷启动时引导配置：Claude 会先说明将从 plugin 内 `shared/CLAUDE.md` 复制或追加到研究项目根，得到用户确认后再写入。
+> 项目级 `CLAUDE.md`（简洁操作原则与研究规则）由各 skill 在冷启动时引导配置：Claude 会先说明将从 plugin 内 `shared/CLAUDE.md` 复制或追加到研究项目根，得到用户确认后再写入。
 
 ## 使用
 
