@@ -32,11 +32,11 @@ allowed-tools: [Read, Grep, Glob, AskUserQuestion]
 **② 按下表对号入座**（CONTEXT × wiki 的有无覆盖全部状态，这是建档分支的唯一真源）：
 
 | `CONTEXT.md` | `wiki/` | 判定 | 动作 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 无 | 无 | **冷启动**（C: `data/` 有资料文件 / D: 空目录） | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 待确认草案 → 一次性请用户补齐并校对 → 用户确认后合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许开始分析**；C 情况把识别到的资料移入 `data/`（征求确认），D 情况提示用户放入资料 |
 | 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | **不要跑 cold_start 重建**——已有 archivist 建好的知识库。停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 流程**只补齐 CONTEXT/README**（不动 wiki；同样先展示草案、用户确认后再写入），再做③④ |
 | 有 | 有 | **wiki 模式** | 做③④。读 `wiki/_index.md` 了解已有主题、资料量、处理状态。证据采集已由 archivist 完成，向用户确认研究问题后**跳过步骤 2，直接进入步骤 3** |
-| 有 | 无 | **裸资料模式** | 做③④。列出 `data/` 评估资料类型和数量，缺 `process/` / `outputs/` 则创建，向用户确认研究问题后进入步骤 2 |
+| 有 | 无 | **裸资料模式** | 做③④。列出 `data/` 评估资料类型和数量，缺 `process/` / `outputs/` 则创建。若目录同时包含旧报告/PPT/memo,先按 cold_start 材料分层标为二手分析/待验证假设,不得与一手资料混作证据。向用户确认研究问题后进入步骤 2 |
 
 **③ 完整性检查（凡 `CONTEXT.md` 已存在就必跑，红线阻断）**：
 - 读 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**作为本次分析的前置约束；读 `README.md` 的**入库范围、边界与已知局限**了解材料地图和可信度命门
@@ -45,164 +45,16 @@ allowed-tools: [Read, Grep, Glob, AskUserQuestion]
 
 **④ 门禁通过判定**——只有 ⓐ CONTEXT.md 存在且 lint 红线为 0、ⓑ README.md 存在、ⓒ 项目根 CLAUDE.md 就位 三项全满足，且已向用户确认研究问题，才算通过；任一不满足不得进入步骤 2/3。
 
-### 步骤 2：证据采集
+### 步骤 2：证据采集路由
 
-对每份资料，提取六类信息：
+- 如果有 `wiki/`：读 `wiki/_index.md`、相关主题页、矛盾页、引用库和统计页，跳过原始资料采集，直接进入步骤 3。
+- 如果没有 `wiki/`：加载 [workflows/evidence_collection.md](workflows/evidence_collection.md)，按资料规模完成采集和编码。
 
-1. **关键观察**：用户说了什么、做了什么、经历了什么
-2. **原始引用**：能说明重要观点的原话（标注参与者类型而非姓名）
-3. **行为 vs 态度**：区分实际行为和口头偏好——行为证据更强
-4. **痛点**：挫折、变通方案、未满足需求（变通方案 = 伪装的未满足需求）
-5. **积极信号**：什么运作良好、令人愉悦的时刻
-6. **上下文**：用户类型、使用场景、经验水平
+### 步骤 3：侦探分析路由
 
-**关键：全量记忆。** 你同时持有所有材料的完整内容，不会像人一样读到第 15 份时遗忘第 3 份的细节。利用这个优势。
+加载 [workflows/detective_analysis.md](workflows/detective_analysis.md)，执行 3a-3e 五个侦探动作，并按要求写入 `process/3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md`。wiki 模式可省 `3a_coding.md`，但仍必须完成 3b-3e。
 
-**大数据量处理**：根据资料数量选择策略：
-
-**≤50 份：全量 LLM 阅读**
-- 分批每批 20-30 份，LLM 直接阅读原文提取六类信息
-- 每批保存到 `process/batch_N.md`，逐批合并
-
-**50-500 份：Python 粗筛 + LLM 精读**
-1. Python 做结构化预处理：提取基础统计（频次分布、回答长度、数值型字段）
-2. Python 按回答质量/长度/多样性抽样 30-50 份代表性样本
-3. LLM 对抽样样本做全量定性阅读（分批，每批 20-30 份）
-4. LLM 阅读中发现的主题，再用 Python 回到全量数据验证频次
-5. **关键**：主题和分群必须从 LLM 阅读中涌现，Python 只负责验证频次和覆盖率
-
-**>500 份：分层抽样 + LLM 深度分析**
-1. Python 做全量结构化统计 + 按关键维度（用户类型、态度倾向等）分层
-2. 每层抽样 10-15 份，确保总样本 50-80 份
-3. LLM 对抽样样本做全量定性阅读
-4. Python 将 LLM 发现的主题回推到全量数据验证
-5. 对 LLM 发现的异常信号，Python 定向搜索全量数据中的类似案例
-
-**始终适用的原则**：
-- Python 做统计和搜索，LLM 做理解和判断——不要反过来
-- 用户分群必须从 LLM 的定性阅读中涌现，不能用 Python 关键词硬分
-- 报告中的每条原始引用，必须是 LLM 读过原文后选出的，不是 Python 按关键词抓的
-
-将提取结果保存到 `process/3a_coding.md`(与步骤 3a 全量记忆编码同一文件,wiki 模式下由 archivist 入库代替本步骤,3a 文件可省)。`batch_N.md` 是分批阅读的临时草稿,合并后归并到 `3a_coding.md`,可保留也可删除。
-
-### 步骤 3：侦探分析（核心差异化）
-
-在完成基础的主题分析后，执行以下侦探动作。
-
-**强制中间产物结构(机器可验)**:
-
-五个侦探动作 3a-3e 的产物**必须分写入 5 个独立文件**,不能糊在一个 detective_analysis.md 里。这是为了反幻觉 H12(表面合规)——LLM 不能靠"已完成盲区扫描"一句话蒙混过关,机器要能验产物。
-
-| 文件 | 对应动作 | 最低字段(lint_process.py 强制) |
-|---|---|---|
-| `process/3a_coding.md` | 全量记忆编码 | 至少 5 条 `#interview_*` / `#survey_*` 引用(wiki 模式可不存在) |
-| `process/3b_blind_spots.md` | 盲区扫描 | 至少 3 条「低频高强度」/「沉默信号」/「应出现但缺失」(无盲区时显式写「搜了 X、Y、Z 三个角度均未发现」) |
-| `process/3c_associations.md` | 全局关联 | 至少 1 条 N×N 跨主题关联描述(无关联时写「比对了 N 对主题,未发现共变」) |
-| `process/3d_contradictions_audit.md` | 矛盾审计 | 每个核心结论必须写出反面证据或显式「已搜未找到 + 搜了什么」+ 至少 1 条替代解释 |
-| `process/3e_evidence_chains.md` | 证据强度 | 每个结论列「支持 X 条 / 反对 Y 条」+ 计数 + 置信度 |
-
-交付前跑:
-```bash
-python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py process/        # 非 wiki 模式
-python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/  # wiki 模式
-```
-
-**执行细节与按需工具(落笔前先读)**:
-
-- 五个侦探动作(3a-3e)的完整执行流程见 [guides/research_methodology.md](guides/research_methodology.md)——置信度标准、备忘录格式、回写规则都在那里
-- 26 个分析工具按需加载,见 [guides/detective_toolkit.md](guides/detective_toolkit.md) 末尾**速查表**——按课题类型挑工具,不需要全部跑
-- 各小节末尾的「⮕ 工具触发」是常见场景下推荐加载的具体工具号,看到对应信号就去 toolkit 查那一节
-
-**如果有 wiki/**：直接在 wiki 页面上执行侦探动作。
-- `wiki/themes/` → 主题编码的输入
-- `wiki/contradictions.md` → 矛盾审计的输入
-- `wiki/uncategorized.md` → 盲区扫描的输入
-- `wiki/quotes.md` → 证据链追溯的输入
-- `wiki/user_patterns.md` → 用户分群的输入
-- `wiki/statistics.md` → 频次验证和定量交叉的输入
-- `wiki/frameworks.md` → 理论框架，用于解释发现和反向预测验证
-- `wiki/benchmarks.md` → 竞品基准，用于差异化分析和机会识别
-- 需要深度统计分析（相关性、回归、贡献度）时，用 Python 回到 `data/` 的原始 CSV 计算，LLM 解读结果
-
-**如果没有 wiki/**：在步骤 2 的提取结果上执行侦探动作。
-
-#### 3a. 全量记忆编码
-
-同时持有所有材料编码，不因阅读顺序偏重任何一份。
-
-- 系统地标记每个观察、引用、数据点
-- 将相关编码归入候选主题
-
-⮕ **工具触发**：基础编码用**工具 1（线索提取）**——五类信号分拣（事实/情感/矛盾/异常/沉默）。探索性课题不知道用什么框架时，加**工具 10（扎根编码）**自下而上长出概念。
-
-#### 3b. 盲区扫描
-
-完成主题化后**反向扫描**：
-
-- 寻找**不属于任何已有主题**的异常观察（wiki 模式：读 `wiki/uncategorized.md`）
-- 检查**低频高强度**信号（1-2 人提到，但情感强烈）——wiki 主题页和 uncategorized 中标注了情感强度，优先关注标注为"高"的
-- 识别**沉默的证据**：哪些预期会出现的主题反而缺失？
-- 产出："以下信号不属于任何已有主题，但值得注意..."
-
-**异常用户扫描（Anomaly Hunter）**：完成异常信号识别后，反向找人——在所有参与者中，找出行为/态度组合与多数人偏差最大的 2-3 个个体，输出完整画像（不只是碎片信号）。问三个问题：① 这个人哪些方面跟其他人最不像？② 他的完整行为组合是什么？③ 他代表了什么"少数派需求"或"未来趋势先兆"？很多创新机会来自少数异常样本，盲区扫描找异常信号，异常用户扫描找异常个体。
-
-⮕ **工具触发**：沉默型线索靠**工具 1（线索提取）**的第五类标签兜底；预期 vs 实际差异靠**工具 4（采集纪律）**的「信息缺口」记录；高频锚定时拉**工具 5（模式扫描）**的"频次高 ≠ 重要"提醒，主动给异常值加权。
-
-#### 3c. 全局关联发现
-
-在所有材料间做 N×N 交叉比对：
-
-- 不同参与者用不同词汇描述的**同一现象**
-- 跨数据源的**隐藏共变模式**（提到 A 的用户是否同时都有 B 行为）
-- 定性数据和定量数据之间的**交叉验证或矛盾**
-
-⮕ **工具触发**：实体/概念关系网络化看 → **工具 11（知识图谱）**找枢纽、桥梁、孤岛；需求空间整体形状 → **工具 12（拓扑直觉）**判断连通/分簇/洞；共变 → 因果时拉**工具 6（因果机制）**做三层为什么并排查替代解释。
-
-#### 3d. 矛盾审计
-
-系统性检查每个结论与所有证据的一致性：
-
-- 每个发现是否有反面证据？
-- 口头偏好与实际行为是否矛盾？
-- 不同用户群体之间是否有观点分歧？
-- **竞争性解释（必做）**：对每个核心结论，至少列出 1 条替代解释（"如果不是 A 导致了这个现象，还可能是什么？"），并标注支持/反驳该替代解释的证据。避免过早收敛到单一解释。
-
-⮕ **工具触发**：竞争性假设没排除干净 → **工具 20（ACH）**矩阵化排除；自己看不出反面 → **工具 21（红队/魔鬼代言人）**强制反向论证；证据和主张之间有跳跃 → **工具 8（Toulmin）**显式写出推理桥梁。
-
-#### 3e. 证据链追溯
-
-为每个结论构建完整的证据链：
-
-- 列出所有支持证据和反对证据，标注来源
-- 计算支持/反对比，量化置信度
-- 标注证据类型（行为证据 > 口头偏好 > 单一来源）
-
-⮕ **工具触发**：每条证据贴等级 → **工具 2（证据分级 GRADE）**A/B/C/D；交叉验证置信度 → **工具 3（三角验证）**至少两维；找最脆弱前提 → **工具 22（Linchpin 检查）**;置信度词汇标准化 → **工具 24（判断校准）**几乎确定/很可能/大致可能/不太可能。
-
-构建优先级矩阵：
-
-| | 高影响 | 低影响 |
-|---|---|---|
-| **高频** | 🔴 最高优先级 | 🟡 体验优化 |
-| **低频** | 🟠 特定分群重要 | ⚪ 记录但降低优先级 |
-
-中间产物按上面表格分写入 `process/3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md` 五个文件,不要糊在一份 detective_analysis.md 里——分文件让机器 lint 能验产物质量。用户分群应从矛盾审计和关联发现中涌现,不要用关键词硬分。
-
-#### 3f. 回写 wiki（仅 wiki 模式）
-
-侦探分析结束后，把本次分析中**新涌现**的发现回写到 wiki，让 wiki 随每次分析变厚。回写边界和格式遵循 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)（wiki 页面结构见 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)）。
-
-回写来源编号统一用 `#analysis_YYYYMMDD`（YYYYMMDD 为今天日期）。具体执行：
-
-1. **新涌现主题**（入库时没浮现、分析才看出的模式） → 在 `wiki/themes/` 创建 `theme_xxx.md`，头部标注「来源类型：分析涌现」。证据栏列原本散落在 `#interview_xx` 中、被分析重新连起来的一手引用；分析增量栏标 `#analysis_YYYYMMDD` 说明"为什么这些归为同一主题"。**无一手资料支撑的纯推断不立主题页，进 `wiki/uncategorized.md` 标「类型：分析推测 / 待资料验证」**
-2. **新发现矛盾**（跨主题或跨资料的矛盾，入库时未标记） → 追加到 `wiki/contradictions.md`，类型标「分析 vs 反例」或「文献预测 vs 数据」，发现来源标 `#analysis_YYYYMMDD`
-3. **新发现的全局关联**（如"提到 A 的用户 80% 同时有 B 行为"） → 在两个相关主题页的「关联主题」栏新增条目，标 `#analysis_YYYYMMDD`
-4. **理论验证状态变化**（数据验证/反驳了文献预测） → 更新 `wiki/frameworks.md` 中对应理论的「验证状态」字段为 `已验证 / 待验证 / 被反驳`，追加 `#analysis_YYYYMMDD`
-5. **沉默信号**（预期出现但实际缺失的主题） → 追加到 `wiki/uncategorized.md`，标「类型：沉默信号 / 来源：#analysis_YYYYMMDD」
-
-**不回写**：报告的措辞、章节排列、优先级矩阵——这些是产出形态，不是知识。
-
-回写后更新 `wiki/_log.md`，追加一条：`[YYYY-MM-DD] 分析回写 #analysis_YYYYMMDD：新增主题 N / 新增矛盾 K / 验证理论 M`。
+如果本次是 wiki 模式且产生新涌现知识，步骤 3 后加载 [workflows/wiki_writeback.md](workflows/wiki_writeback.md)，只追加回写，不覆盖原资料栏。
 
 ### 步骤 4：产出形态路由
 
@@ -280,45 +132,14 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_information_pack.py outputs/information
 - 提供后续研究计划建议
 - 根据反馈调整，保存最终版本到 CONTEXT 速读卡声明的"产出位置"（默认 `outputs/`）
 
-## 分析方法参考
+## 资源地图（按需加载）
 
-五个核心侦探动作的详细执行指南见 [guides/research_methodology.md](guides/research_methodology.md)。
-
-### 侦探工具箱（按需加载）
-
-[guides/detective_toolkit.md](guides/detective_toolkit.md) 是完整的 26 个侦探分析工具，按四层组织：
-
-- **采集层**（工具 1-4）：线索提取、证据分级、三角验证、采集纪律
-- **结构层**（工具 5-19）：模式扫描、因果机制、概念命名、Toulmin 论证、KAC、扎根编码、知识图谱、拓扑直觉、JTBD、Kano、用户旅程、价值主张画布、心智模型、采纳阶梯、5 Whys
-- **判断层**（工具 20-25）：ACH 竞争性假设、红队/魔鬼代言人、Linchpin 检查、预验尸、判断校准、情景规划
-- **综合层**（工具 26）：证据综合
-- **认知偏误防护**：贯穿全程的 9 种偏误防护 + 5 条实操原则
-
-使用方式：查工具箱末尾的**速查表**，按课题类型选择启用哪些工具，不需要全部执行。
-
-## 质量控制规则
-
-始终适用：
-
-1. **让数据说话**。不要把发现硬塞进预设叙事
-2. **行为 > 口头偏好**。用户做的比说的更可信
-3. **引用是证据，不是发现**。发现是你对引用含义的解读
-4. **2 个访谈的发现是假设，不是结论**。明确标注置信度
-5. **矛盾是线索，不是麻烦**。它们常揭示不同用户分群
-6. **5-8 个强发现好过 20 个弱发现**。抵制过度综合的诱惑
-7. **侦探备忘录不可省略**。它是你作为 AI 搭档的核心价值体现
-
-## 通用方法学纪律
-
-通用方法学红线(优先级、定量、概念诚实、证据可追溯、写作风格等)是三个 skill 共用,**单一真源**在 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 的"研究产出的质量底线"。本 SKILL.md 不复述,落笔前先读那一节。
-
-CONTEXT.md 的输出契约只列项目级红线,通用规则由 CLAUDE.md 兜底。
-
-## 可用资源
-
-资源按需加载，不要一次性读完：
-- 写完整报告前读 `workflows/report_workflow.md`，回答具体问题时读 `workflows/brief_workflow.md`。
-- 执行五个侦探动作前读 `guides/research_methodology.md`；只有需要选择额外分析框架时才读 `guides/detective_toolkit.md`。
-- 落笔前读 `guides/writing_style.md`；完整报告还要读 `guides/report_principles.md` 和 `templates/simple_report.md`。
-- 生成 B1 信息包前读 `../../contracts/information_pack.md`；wiki 回写前读 `../../contracts/analysis_writeback.md` 和 `../../contracts/wiki_format.md`。
-- 通用质量底线只以 `../../shared/CLAUDE.md` 为单一真源。
+- 需要从原始 `data/` 采集证据时，加载 [workflows/evidence_collection.md](workflows/evidence_collection.md)。wiki 模式跳过该文件。
+- 执行五个侦探动作 3a-3e 前，加载 [workflows/detective_analysis.md](workflows/detective_analysis.md)；其中的分文件产物由 `scripts/lint_process.py` 校验。
+- wiki 模式需要回写新涌现主题、矛盾、关联、理论验证或沉默信号时，加载 [workflows/wiki_writeback.md](workflows/wiki_writeback.md)。
+- 回答具体问题、没要求完整报告时，加载 [workflows/brief_workflow.md](workflows/brief_workflow.md)。
+- 写完整/正式/深度研究报告时，加载 [workflows/report_workflow.md](workflows/report_workflow.md)。
+- 需要选择额外分析框架时，才加载 [guides/detective_toolkit.md](guides/detective_toolkit.md)；不要默认全跑 26 个工具。
+- 落笔前读 [guides/writing_style.md](guides/writing_style.md)；完整报告还要读 [guides/report_principles.md](guides/report_principles.md) 和 [templates/simple_report.md](templates/simple_report.md)。
+- 生成 B1 信息包前读 [../../contracts/information_pack.md](../../contracts/information_pack.md)；wiki 回写前读 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md) 和 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)。
+- 通用质量底线只以 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 为单一真源。

@@ -4,7 +4,7 @@
 
 产出形态:**A1 + A2**(主线),按需追加 **B1 信息包**(扩展)。
 
-> 这是 detective 两条产出工作流之一,另一条是 [report_workflow.md](report_workflow.md)。SKILL.md 步骤 4 根据用户意图路由到这里。
+> 这是 detective 两条产出工作流之一，另一条是 [report_workflow.md](report_workflow.md)。由 `research-detective/SKILL.md` 的产出形态路由按用户意图加载。
 
 ## 1. 主线产出:A1 + A2
 

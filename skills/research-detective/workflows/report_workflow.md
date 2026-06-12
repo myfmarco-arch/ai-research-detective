@@ -4,7 +4,7 @@
 
 产出形态:**完整研究报告 + 侦探备忘录**(主体)+ A1 + A2(顺带存盘)。
 
-> 这是 detective 两条产出工作流之一,另一条是 [brief_workflow.md](brief_workflow.md)。SKILL.md 步骤 4 根据用户意图路由到这里。
+> 这是 detective 两条产出工作流之一，另一条是 [brief_workflow.md](brief_workflow.md)。由 `research-detective/SKILL.md` 的产出形态路由按用户意图加载。
 
 ## 0. 报告需求澄清门禁(落笔前必做)
 
