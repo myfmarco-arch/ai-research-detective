@@ -1,7 +1,11 @@
 ---
 name: research-archivist
-description: 入库研究资料、整理原始数据成可分析知识库、更新 wiki。把访谈记录、问卷、用户反馈增量入库为结构化 wiki，为 research-detective 侦探分析提供"编译好的知识"。当用户有新研究资料要处理、要把原始数据整理成可分析知识库、提到"入库/处理资料/更新 wiki"时使用。**被唤起后第一步永远是步骤 1 环境门禁：检查 CONTEXT.md / README.md / CLAUDE.md 是否就位，缺失则先走 cold_start 配置（生成 CONTEXT/README、配置 CLAUDE.md），严禁未初始化就直接读 data/ 入库。**
-allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
+description: Use this skill when the user asks to ingest, organize, archive, or update research source materials, wiki pages, evidence packs, or information packs.
+when_to_use: Trigger on requests such as 入库, 资料整理, 更新 wiki, 生成信息包, 整理访谈/文档/素材, 建立研究资料库. Do not use for report writing, conclusion synthesis, or adversarial review.
+argument-hint: [source-path]
+arguments: [source_path]
+disable-model-invocation: true
+allowed-tools: [Read, Grep, Glob, AskUserQuestion]
 ---
 
 # 研究知识入库助手（Archivist）
@@ -12,6 +16,10 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 
 这个 wiki 是为 `research-detective` 侦探分析 skill 准备的——侦探在 wiki 上工作，不需要回到原始资料。你的入库质量直接决定侦探分析的质量。
 
+## 直接调用参数
+
+如果用户用 `/research-archivist $source_path` 调用,先把 `$source_path` 当作本次待入库材料或目录候选。必须先验证路径存在并说明将处理的范围;路径不存在或含义不清时停下来问。即使提供了路径,也不能跳过步骤 1 环境门禁。
+
 ## 核心原则
 
 1. **LLM 阅读，不是 Python 关键词匹配**。每份资料必须由你直接阅读理解，不能用脚本替代
@@ -19,33 +27,6 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 3. **矛盾即时标记**。入库时发现与已有知识矛盾的内容，立即记录到矛盾页
 4. **未归类的不丢弃**。无法归入任何主题的观察，放进待审页——这是侦探盲区扫描的输入
 5. **wiki 随分析生长**。每次 `research-detective` 侦探分析、`research-reviewer` 对抗审查产生的新涌现（新主题、新矛盾、新关联、被反驳的理论、被发现的盲区），都会回写到 wiki。wiki 不是只在入库时变化，而是随着分析不断变厚——这是与传统知识库的核心区别。回写规则见 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)。
-
-## 项目结构
-
-```
-研究项目/
-├── CONTEXT.md          # 研究背景和问题（首次启动时由 shared/cold_start.md 流程生成）
-├── data/               # 原始资料（只读，不修改）
-│   ├── interview_01.md
-│   ├── interview_02.md
-│   └── ...
-├── wiki/               # 你维护的知识库（你拥有这个目录）
-│   ├── _index.md       # wiki 总览：主题列表、资料处理进度、最后更新时间（研究问题引用 CONTEXT.md，不在此重复）
-│   ├── _log.md         # 入库日志：每次处理了什么、发现了什么
-│   ├── themes/         # 主题页（从数据中涌现）
-│   │   ├── theme_主动服务期待.md
-│   │   ├── theme_隐私顾虑.md
-│   │   └── ...
-│   ├── contradictions.md   # 矛盾记录（侦探矛盾审计的输入）
-│   ├── uncategorized.md    # 未归类观察（侦探盲区扫描的输入）
-│   ├── quotes.md           # 高质量原始引用库（按主题组织）
-│   ├── user_patterns.md    # 用户行为模式和分群信号
-│   ├── statistics.md       # 定量统计（频次、分布、交叉表）
-│   ├── frameworks.md       # 文献框架（理论预测 + 验证状态）
-│   └── benchmarks.md       # 竞品基准（能力矩阵 + 差异化对比）
-├── process/            # research-detective 的分析工作区（中间产物）
-└── outputs/            # research-detective 的产出
-```
 
 ## 工作流程
 
@@ -55,199 +36,40 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion]
 
 **① 探测目录状态**——检查 `CONTEXT.md`（研究背景/问题，单一真源）、`README.md`（入库范围/边界/局限）、项目根 `CLAUDE.md`（项目级硬约束）、`wiki/`（已有知识库）是否存在。
 
-**② 按下表对号入座**（CONTEXT × wiki 的有无覆盖全部四种状态，这是初始化分支的唯一真源）：
+**② 按下表对号入座**（CONTEXT × wiki 的有无覆盖全部四种状态，这是初始化分支的唯一真源）。如果 cold_start 识别到旧报告/PPT/memo/研究计划,按其材料分层处理:旧报告/PPT/memo 是二手分析或待验证假设,研究计划是项目语境,都不能当作一手资料入库。
 
 | `CONTEXT.md` | `wiki/` | 判定 | 动作 |
-|---|---|---|---|
-| 无 | 无 | **首次入库** | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 初稿 → 一次性请用户补齐 → 合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许读 data/ 做提取** |
-| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | 停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 补齐 CONTEXT/README，再做③④ |
+| --- | --- | --- | --- |
+| 无 | 无 | **首次入库** | 走 [../../shared/cold_start.md](../../shared/cold_start.md) **完整流程**（扫项目 → 生成 CONTEXT/README 待确认草案 → 一次性请用户补齐并校对 → 用户确认后合并写入 → 配置 CLAUDE.md），再做下方③④。完成前**不许读 data/ 做提取** |
+| 无 | 有 | **异常态**（wiki 在但 CONTEXT 丢了） | 停下，告诉用户"检测到 wiki 但缺 CONTEXT.md"，按 cold_start 补齐 CONTEXT/README（同样先展示草案、用户确认后再写入），再做③④ |
 | 有 | 无 | **已配置未入库** | 跳过冷启动，做③④ |
 | 有 | 有 | **增量更新** | 跳过冷启动，做③（读 `wiki/_index.md` 了解已处理资料和主题）+ ④ |
 
 **③ 完整性检查（凡 `CONTEXT.md` 已存在就必跑，红线阻断）**：
 - 读 `CONTEXT.md` 的**速读卡、我的身份、研究问题、底线**——决定本次入库的视角和颗粒度（同样的访谈，研究问题不同，提取的主题颗粒度不同）；读 `README.md` 的**入库范围与边界**——避免范围外资料混入
-- 跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
+- 跑 `python3 ${CLAUDE_SKILL_DIR}/../../shared/scripts/lint_context.py CONTEXT.md`：红线非 0（占位符残留 / 必填字段空 / 核心问题 < 20 字）→ **停下**按 cold_start 让用户补齐，红线清零前不前进；仅黄线（底线套话 / 填充式动词）→ 提示改写但不阻断
 - 检查项目根 `CLAUDE.md`：缺失或非本 skill 版本 → 按 [../../shared/cold_start.md](../../shared/cold_start.md) 步骤 4 第 5 项处理（自动复制或追加，先征求用户同意）
 
 **④ 门禁通过判定 + 建库**——只有 ⓐ CONTEXT.md 存在且 lint 红线为 0、ⓑ README.md 存在、ⓒ 项目根 CLAUDE.md 就位 三项全满足才算通过；任一不满足不得进入步骤 2。通过后：
 - 若 `wiki/` 不存在（首次入库 / 已配置未入库 / 异常态补齐后）：建 wiki 目录结构（见上方"项目结构"），在 `wiki/_index.md` 写入初始信息（资料清单、处理状态、最后更新时间；**研究问题不写在此，引用 `CONTEXT.md`**，单一真源避免漂移）
 - 进入步骤 2
 
-### 步骤 2：资料评估
+### 步骤 2：入库路由
 
-扫描 `data/` 目录：
-1. 列出所有资料文件，评估类型（访谈/问卷/反馈/数据）和数量
-2. 对于增量更新：对比 `wiki/_index.md` 的已处理清单，识别新增资料
-3. 确定处理顺序（建议按时间或编号顺序）
-4. 告诉用户："共 N 份资料待处理，预计需要 M 轮。开始？"
+- 若 `wiki/` 不存在或需要首次入库：加载 [workflows/intake_workflow.md](workflows/intake_workflow.md)，创建 wiki 结构并逐份处理资料。
+- 若 `wiki/` 已存在且有新增资料：加载 [workflows/incremental_update.md](workflows/incremental_update.md)，只处理新增资料，并与已有主题、矛盾、统计对照。
+- 写入 wiki 页面前，加载 [guides/wiki_quality_rules.md](guides/wiki_quality_rules.md)，并遵守 [../../contracts/wiki_format.md](../../contracts/wiki_format.md) 与 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)。
 
-### 步骤 3：逐份入库（核心步骤）
+### 步骤 3：入库回检路由
 
-对每份资料，执行以下操作：
+入库或增量更新完成后，加载 [workflows/intake_validation.md](workflows/intake_validation.md)。必须运行 `python3 ${CLAUDE_SKILL_DIR}/scripts/verify_quotes.py wiki`，并完成人工抽查 3 份；通过后才能告诉用户 wiki 已就绪。
 
-#### 3a. 阅读和提取
+## 资源地图（按需加载）
 
-根据资料类型选择处理方式：
-
-**定性资料（访谈、反馈、开放题）**：直接阅读原文（不用 Python），提取：
-- **关键观察**：用户说了什么、做了什么、经历了什么
-- **原始引用**：有力的原话（标注资料编号，如 #interview_01）
-- **行为 vs 态度**：区分实际行为和口头偏好
-- **痛点**：挫折、变通方案、未满足需求
-- **积极信号**：什么运作良好
-- **上下文**：用户类型、使用场景、经验水平
-- **情感强度**：这个话题对用户有多重要（从用词和描述详细程度判断）
-
-**定量资料（CSV 问卷、评分数据）**：用 Python 计算统计结论，LLM 解读含义：
-1. Python 计算每个字段的：均值、中位数、分布（频次和百分比）、按关键维度的交叉表
-2. LLM 阅读统计结果，提取有意义的发现（不是罗列所有数字）
-3. 将统计结论写入 `wiki/statistics.md`，包含：
-   - 关键指标的数值 + 分布形状（双峰？正态？偏态？）
-   - 按用户分群拆分的差异
-   - 异常值和意外发现
-4. 如果问卷有开放题字段 → 按定性资料方式处理（LLM 逐条阅读）
-5. 将定量发现与已有定性主题交叉验证：
-   - 一致 → 更新主题页，追加"问卷验证：XX% 用户选择了..."
-   - 矛盾 → 记录到 `wiki/contradictions.md`（如"访谈中 60% 说隐私是最大顾虑，但问卷中仅 28%"）
-
-**原始数据不进 wiki**——CSV 留在 `data/`，wiki 里只存统计结论和解读。侦探分析时看 wiki 就够了，需要验证时再回到原始 CSV。
-
-**文献资料（论文、研究报告、理论文章）**：提取分析框架，不是当作一手证据：
-1. LLM 阅读文献，提取：
-   - **理论框架**：这篇文献提出了什么模型/理论？
-   - **可验证预测**：如果这个理论成立，在我们的数据中应该看到什么？
-   - **关键概念**：有哪些概念可以用来解释我们的发现？
-2. 写入 `wiki/frameworks.md`，每条包含：
-   - 理论名称 + 一句话定义
-   - 来源（作者、年份、学科）
-   - 可验证预测：`"如果 [理论] 成立，数据中应该看到 [X]"`
-   - 验证状态：已验证/待验证/被反驳（与已有主题交叉后更新）
-3. 与已有主题做双向匹配：
-   - **正向**：数据中的发现能被哪个理论解释？→ 更新主题页，追加"理论支撑：[理论名] 预测了此现象"
-   - **反向**：理论预测应该出现的现象，数据中有没有？→ 有则验证，没有则标注"沉默信号"
-
-**竞品资料（产品分析、功能对比、市场报告）**：提取参照基准：
-1. LLM 阅读竞品资料，提取：
-   - **能力清单**：竞品做了什么功能/场景？
-   - **差异化点**：竞品之间有什么不同？
-   - **用户反馈**（如有）：竞品用户怎么评价？
-2. 写入 `wiki/benchmarks.md`，包含：
-   - 竞品 × 能力矩阵（谁有什么）
-   - 行业基线：所有竞品都有的 = 必备
-   - 差异化：只有少数竞品有的 = 机会或伪需求
-3. 与已有主题和用户期待交叉：
-   - 用户想要 + 竞品有 → 必须做（table stakes）
-   - 用户想要 + 竞品没有 → 差异化机会
-   - 用户不在意 + 竞品有 → 可能是过度建设
-   - 用户不在意 + 竞品没有 → 忽略
-
-**文献和竞品都不是一手证据**——它们是 framework 和 benchmark，用于解释和对比，不能替代用户数据。当文献预测与用户数据矛盾时，优先信任用户数据。
-
-#### 3b. 整合进 wiki
-
-对提取的每条信息，判断归属：
-
-**匹配已有主题** → 更新对应的 `wiki/themes/theme_xxx.md`：
-- 追加新证据（引用 + 来源编号）
-- 更新频次统计
-- 如果新证据与已有结论矛盾 → 同时记录到 `wiki/contradictions.md`
-
-**不匹配任何主题但有价值** → 两种处理：
-- 如果多份资料都出现了类似观察 → 创建新主题页 `wiki/themes/theme_新主题.md`
-- 如果只是孤例 → 记录到 `wiki/uncategorized.md`（标注来源和情感强度）
-
-**高质量引用** → 追加到 `wiki/quotes.md`，按主题分组
-
-**用户行为模式** → 更新 `wiki/user_patterns.md`
-
-#### 3c. 更新统计和索引
-
-每处理完一批（10-20 份）：
-- 更新 `wiki/statistics.md`：各主题频次、用户类型分布、情感强度分布
-- 更新 `wiki/_index.md`：已处理资料清单、主题列表、最后更新时间
-- 更新 `wiki/_log.md`：本批处理了什么、新发现了什么主题、标记了什么矛盾
-
-### 步骤 4：入库完成
-
-全部资料处理完后：
-
-1. 更新 `wiki/_index.md` 的最终状态
-2. 在 `wiki/_log.md` 写入总结：
-   - 共处理 N 份资料
-   - 涌现了 M 个主题
-   - 标记了 K 条矛盾
-   - 有 J 条未归类观察待侦探审查
-3. 进入步骤 5 入库回检,通过后再交付
-
-### 步骤 5：入库回检（切断"垃圾入,垃圾出"链路）
-
-侦探分析的质量上限取决于 wiki 的入库质量。交付给 detective 之前,**先跑机器全量校验,再人工抽查 3 份**:
-
-#### 5a. 机器先查:引用真实性 100% 全量校验(红线)
-
-```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-archivist/scripts/verify_quotes.py wiki
-```
-
-脚本扫 `wiki/themes/*.md` 「证据」栏 + `wiki/quotes.md` 中所有 `#interview_xx: "..."` 形态的一手引用,逐条到 `data/<id>.*` 原始资料里子串匹配。改一个字、加一个词、引用了不存在的资料编号都会 fail。
-
-**红线**:exit 0 才算过;非 0 必须修正后再交付,**不允许跳过**。这一步把"引用改写"幻觉从抽查的 6% 覆盖率拉到 100%。
-
-豁免:仅校验「证据」栏的一手引用;「分析增量」栏(`#analysis_*` / `#review_*`)允许改写型摘录,不校验。
-
-#### 5b. 人工抽查 3 份(机器查不到的语义层)
-
-机器只能查"引用真不真",查不出"该归类的有没有归类"。**随机抽 3 份原始资料,与 wiki 对照检查**:
-
-1. **覆盖检查**:这份资料里的关键观察(痛点、积极信号、变通方案、强情感引用),是否都在某个主题页 / `quotes.md` / `uncategorized.md` 中找得到?如果有遗漏,补上。
-2. **来源可追溯**:每个主题页的「证据」栏条目都有 `#interview_xx` 来源编号?(机器已查"原话是否被改写";本步查"是否漏标了来源")
-3. **矛盾完整**:这份资料里有没有跟已有主题结论冲突的内容,但没进 `contradictions.md`?入库时漏标的矛盾在这一步补。
-4. **未归类不是偷懒**:翻 `uncategorized.md`,每条问自己"这真的不属于任何已有主题吗?还是我没认真找归属?"——后者归回去,前者保留。
-5. **统计与定性自洽**:`statistics.md` 中的频次和主题页声称的"N 人提到"对得上?对不上是哪边出错?
-
-回检发现的问题就地修正,**不要等到分析阶段再返工**。修正完成后:
-
-- 在 `wiki/_log.md` 追加一条:`[YYYY-MM-DD] 入库回检:verify_quotes 校验 N 条引用全部命中;人工抽查 #interview_xx, #interview_yy, #interview_zz,补正 N 条遗漏 / K 条矛盾 / M 条未归类回流`
-- 告诉用户:
-  - "wiki 已就绪并通过回检。共 M 个主题、K 条矛盾、J 条未归类观察。"
-  - "可以用 research-detective 进行侦探分析了。"
-
-## 增量更新规则
-
-当用户带着新资料来时：
-
-1. 读取 `wiki/_index.md`，了解已有状态
-2. 识别 `data/` 中的新增文件（对比已处理清单）
-3. 只处理新增文件，但整合时要与已有 wiki 内容对照：
-   - 新证据支持已有主题 → 追加证据，更新频次
-   - 新证据与已有结论矛盾 → 记录矛盾，**不要修改已有结论**（矛盾留给侦探判断）
-   - 新证据涌现新主题 → 创建新主题页
-   - 已有主题在新资料中完全缺失 → 在 `wiki/uncategorized.md` 标注"沉默信号"
-4. 更新所有索引和统计
-5. **跑一次入库回检**（步骤 5）——增量更新最容易漏标矛盾、漏归类、改写引用,必须回检兜底。
-   - 5a 机器全量校验(`verify_quotes.py`)始终对全量 wiki 跑——无论是新增主题页还是新增证据条目,改写都会被抓
-   - 5b 人工抽查的抽样范围:**优先抽新增资料 + 被新增资料修改过的旧主题页对应的原始资料**,不是从全量随机抽
-   - `_log.md` 回检记录里写明"增量回检:verify_quotes 校验 N 条引用全部命中;抽 #interview_xx(新增)+ #interview_yy(因新增触发了主题 Z 的更新)"
-
-## 跨 skill 契约
-
-archivist 与 detective、reviewer 的接口规范统一收在 `contracts/`：
-
-- **wiki 页面格式**:[../../contracts/wiki_format.md](../../contracts/wiki_format.md) — 主题页 / 矛盾记录的结构模板,以及"资料栏 vs 分析增量栏"的硬约束
-- **分析回写规则**:[../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md) — 来源编号约定、detective/reviewer 的回写通道、回写边界、不篡改资料栏、回写后必做
-
-archivist 入库时按 wiki 页面格式契约建页;detective/reviewer 回写时按分析回写契约操作。这两份契约是三个 skill 共同遵守的接口,不是 archivist 私有规则。
-
-## 质量规则
-
-> 通用方法学红线(证据可追溯、概念诚实、定量纪律等)见 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 的"研究产出的质量底线"。本节只列入库专属规则。
-
-1. **每份资料必须由 LLM 直接阅读**,不能用 Python 提取内容后再处理
-2. **Python 只用于辅助统计**(计算频次、生成交叉表),不用于内容理解
-3. **原始引用必须准确**,标注来源编号,不要改写原话
-4. **矛盾不要调和**——记录双方证据,留给侦探判断
-5. **未归类观察不要丢弃**——它们可能是侦探最有价值的发现
-6. **每批处理后更新索引**——wiki 的可用性依赖索引的准确性
-7. **资料栏与分析增量栏严格分离**——主题页的「证据」栏只放一手资料;侦探分析、审查反例等二手涌现一律写入「分析增量」栏。读者必须能一眼区分"事实"和"解读"
-8. **回写不覆盖**——回写到 wiki 时,新内容只能追加,不能修改原入库时写下的证据条目(即使发现原来理解错了,也是另开一条标 `#analysis_xx 修正:...`,保留旧条目)
-9. **主题命名诚实**——主题名、矛盾描述对照 [../research-detective/guides/writing_style.md](../research-detective/guides/writing_style.md) 红线检查,不允许概念癌词组("结构性 X""X 悖论")或稻草人否定("不是 X 而是 Y")。wiki 措辞会被后续所有分析继承,落字前自查
+- 首次建库或完整入库：加载 [workflows/intake_workflow.md](workflows/intake_workflow.md)。
+- 增量更新：加载 [workflows/incremental_update.md](workflows/incremental_update.md)。
+- 入库回检：加载 [workflows/intake_validation.md](workflows/intake_validation.md)。
+- 创建或编辑 wiki 页、处理回写边界、检查主题命名时：加载 [guides/wiki_quality_rules.md](guides/wiki_quality_rules.md)。
+- wiki 页面格式遵循 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)。
+- detective/reviewer 分析回写遵循 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)。
+- 通用方法学红线只以 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 为单一真源。

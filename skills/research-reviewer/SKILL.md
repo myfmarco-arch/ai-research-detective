@@ -1,7 +1,10 @@
 ---
 name: research-reviewer
-description: 审查研究报告、对抗性验证结论、找反面证据推翻结论。对核心结论做质量把关——主动搜证据反驳，确认/弱化/推翻每条结论。当用户说"审查报告/检查结论/review"或要对分析结果做质量把关时使用。**被唤起后第一步永远是步骤 1 环境门禁：定位 CONTEXT.md + 报告文件并跑 CONTEXT 完整性检查；缺任一则停下来问用户，绝不自己 cold-start 或凭空审查。**
-allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
+description: Use this skill when the user asks to review, critique, validate, or quality-check a research report for unsupported claims, weak evidence, missing citations, or overconfident conclusions.
+when_to_use: Trigger on requests such as 审稿, 检查报告, 挑问题, 验证结论, 找幻觉, 找反面证据, 看证据是否支撑. Do not use for writing, revising, or ingesting research materials.
+argument-hint: [report-path]
+arguments: [report_path]
+allowed-tools: [Read, Grep, Glob, AskUserQuestion, Agent]
 ---
 
 # 对抗性审查员
@@ -21,6 +24,12 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 
 绝对不做：建议怎么改、提供替代方案、重写内容、说"可以考虑..."
 
+## 直接调用参数与执行方式
+
+如果用户用 `/research-reviewer $report_path` 调用,先把 `$report_path` 当作候选待审报告。必须验证文件存在;不存在或未提供时,从 `CONTEXT.md` 速读卡的产出位置和 `outputs/` 中寻找候选,仍不确定就问用户。
+
+本 skill 整体保持 inline 执行,不要把整个 reviewer 设置为 `context: fork`:主会话负责定位输入、调度多轮独立 subagent、合并取交集和输出审查结论。只在步骤 2 的核心结论提取、必要的反证复核中使用独立 subagent。
+
 ## 工作流程
 
 ### 步骤 1：定位输入（环境门禁，不可跳过）
@@ -35,226 +44,32 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion, Agent]
 - `wiki/` 目录（如果存在，用于搜索反面证据）
 - `data/` 目录（原始资料，用于回溯验证）
 
-**CONTEXT 完整性检查**(机器先查，红线阻断):跑 `python3 ${CLAUDE_PLUGIN_ROOT}/shared/scripts/lint_context.py CONTEXT.md`——红线非 0(必填字段空 / 核心问题 < 20 字 / 占位符残留)→ **停下来反馈用户**;CONTEXT 不达标会让审查失去靶子,审查也是空的。
+**CONTEXT 完整性检查**(机器先查，红线阻断):跑 `python3 ${CLAUDE_SKILL_DIR}/../../shared/scripts/lint_context.py CONTEXT.md`——红线非 0(必填字段空 / 核心问题 < 20 字 / 占位符残留)→ **停下来反馈用户**;CONTEXT 不达标会让审查失去靶子,审查也是空的。
 
-**门禁通过判定**：只有 ⓐ 找到 CONTEXT.md 且 lint 红线为 0、ⓑ 找到待审报告文件 两项都满足才能进入步骤 2。**找不到 CONTEXT.md 或报告文件 → 停下来问用户**要审查哪份报告、对应的项目语境在哪，不要自己跑 cold_start 生成 CONTEXT。
+**门禁通过判定**：只有 ⓐ 找到 CONTEXT.md 且 lint 红线为 0、ⓑ 找到待审报告文件 两项都满足才能进入步骤 2。
 
-### 步骤 2:提取核心结论(multi-agent 采样取交集,对抗 H1 随机性)
+**只有报告、没有 CONTEXT 的轻量分支**：如果用户只提供报告文件、没有项目 CONTEXT,不要运行 cold_start,也不要凭空补研究语境。先询问是否进行“报告内证据一致性快速审查”。用户确认后可以继续,但必须在 `review.md` 开头标注局限：本次只能检查报告内部 unsupported claims、过度推断、引用不支撑、结论强度与证据不匹配;无法验证原始资料、样本边界或报告外反证。若用户要完整对抗审查,则要求补充 CONTEXT + 原始资料或 wiki。
 
-按"**推翻它则报告失效**"的标准筛核心结论。核心结论 = 如果这个被推翻,报告的主要价值就没了。
+找不到报告文件 → 停下来问用户要审查哪份报告。找到 CONTEXT 但不达标 → 反馈用户补齐,不要自己 cold_start。
 
-**默认开启:三轮独立采样**
+### 步骤 2：核心结论提取路由
 
-为了对抗 LLM 推理的随机性(同样输入两次跑结论不同),核心结论提取**默认 spawn 3 个独立 subagent 各自从报告 + wiki/themes/ + wiki/contradictions.md 提取核心结论**,然后取交集:
+加载 [workflows/claim_extraction.md](workflows/claim_extraction.md)，按“推翻则报告失效”的标准筛选本批核心结论。默认使用 3 个独立 subagent 采样取交集；用户明确说「快速审」「不要 multi-agent」「省 token」时才降级单 LLM。
 
-- **3 次都出现** → 强结论(进本批审查)
-- **2 次出现** → 中等(标注「2/3 采样一致」,仍可审)
-- **1 次出现** → 弱(进附加发现,不进本批主审)
+### 步骤 3：对抗性审查路由
 
-具体执行:用 `Agent` 工具(subagent_type=`general-purpose`)分 3 次调用,每次给同一个 prompt(变化由 LLM 内部随机性自然产生),要求严格 JSON 输出:
+加载 [workflows/adversarial_review.md](workflows/adversarial_review.md)，对每条核心结论主动搜索反面证据，完成证据强度复核，并判定 `confirmed` / `weakened` / `challenged`。搜索过程必须在 `review.md` 留足迹。
 
-```
-任务:从 [报告路径] + wiki/themes/ + wiki/contradictions.md 中独立提取「推翻则报告失效」的核心结论。
+### 步骤 4：输出与回写路由
 
-筛选标准:
-- 不是每个章节的小结论,是承重墙——其他次级判断挂在这条上,这条塌了上面全塌
-- 多数报告 1-3 条;超过 5 条说明你筛得不够狠,重来
+- 写 `outputs/review.md` 前，加载 [guides/reviewer_output_format.md](guides/reviewer_output_format.md)，严格使用其中结构和交付检查。
+- wiki 模式下如发现反例、盲区、被反驳理论或误读修正，加载 [workflows/review_writeback.md](workflows/review_writeback.md)，只追加回写，不覆盖原资料栏。
 
-不要从 detective 标注的"核心结论"列表里直接抄——独立判断哪些是承重墙。
+## 资源地图（按需加载）
 
-输出严格 JSON:
-{"core_conclusions": [{"id": 1, "text": "结论原文(完整,不省略)", "load_bearing_reason": "为什么这是承重墙(<= 50 字)"}]}
-```
-
-**取交集逻辑**(reviewer 主流程做):
-- 读 3 个 subagent 的 JSON 输出(每个返回 `core_conclusions` 数组)
-- 用文本相似度(token Jaccard 或子串匹配)聚合:重合 ≥ 70% 视为同一条
-- 输出「采样一致性表」写到 review.md 开头:
-
-```markdown
-## 采样一致性
-
-本批核心结论由 3 个独立 subagent 从同一报告 + wiki 提取后取交集得出。
-
-| 候选结论 | 出现次数 | 判定 |
-|---|---|---|
-| 推送疲劳是头号痛点 | 3/3 | ✅ 强(进本批) |
-| 隐私顾虑驱动流失 | 2/3 | ⚠ 中等(进本批,标注 2/3 采样一致) |
-| 老年用户找不到入口 | 1/3 | 进附加发现,不进本批主审 |
-```
-
-**降级路径**:
-- 任一 subagent 返回非法 JSON / 超时 / 失败 → 在 review.md 警告"multi-agent 采样降级到单 LLM 模式,token 节省但 H1 随机性未对抗",继续单 LLM 流程
-- 用户在 reviewer 启动时显式说「快速审」/「不要 multi-agent」/「省 token」→ 直接走单 LLM 模式
-
-**单 LLM 兜底筛选规则**(降级或显式快速审时用):
-
-- 不是"每个章节的小结论"
-- 不是"措辞最响的句子",是"承重墙"
-- **数量由报告本身决定,不预设**:多数报告 1-3 条;战略级 / 多课题报告 **分批审,每批不超过 3 条**——每批 ≤3 不是凑数,是为了每条都能跑完 3 轮反面证据搜索
-- 在 review.md 开头列"本批审查 N 条 / 总核心结论 K 条 / 为什么先审这 N 条"
-
-如果你筛出 5 条以上还都觉得是"推翻则报告失效",停一下——大概率你筛得不够狠,或者报告本身缺主线(这本身是一条审查发现,记到附加发现里)。
-
-### 步骤 3：主动搜索反面证据(必须留足迹)
-
-对每个核心结论，执行以下搜索。**搜索过程必须在 review.md 里留具体足迹**——这是反幻觉 H12(LLM 编造「搜了 3 轮」)的对抗手段:不留足迹 = 视为没搜。
-
-**如果有 wiki/**：
-- 读 `wiki/contradictions.md`——有没有已标记的矛盾与此结论相关？
-- 读 `wiki/uncategorized.md`——有没有未归类观察能反驳此结论？
-- 读相关 `wiki/themes/` 页面——证据是否被选择性引用？
-- 读 `wiki/quotes.md`——有没有被报告忽略的反面引用？
-
-**如果没有 wiki/**：
-- 用 Grep/Glob 在 `data/` 中搜索与结论相反的表述
-- 检查报告引用最多的参与者，在其他问题上是否说过矛盾的话
-
-**通用搜索角度**：
-- 有没有用户持相反观点但被报告忽略了？
-- 有没有整个用户群体的声音完全缺失？（如轻度用户、特定年龄段）
-- 报告的频率数据是否准确？（抽查几个数字）
-- 结论的置信度标注是否与证据强度匹配？
-
-每个结论最多搜 3 轮。**confirmed 判定的门槛**:至少 3 轮 + 命中 2+ 个 `#interview_*` / `#survey_*` 编号 + 每轮贴具体命令片段或文件位置 + 命中条目贴 30-60 字原文摘录。机器 lint 会按这些字段验产物;不达标的 confirmed 结论会被自动降级或 fail。
-
-### 步骤 3b:跨角色证据强度复核(对抗 H6 自标自查)
-
-完成搜索后,对**每个核心结论**,**忽略 detective 标的等级**,从 wiki + 原始资料独立重新评估证据强度,并给出对照表:
-
-```markdown
-## 证据强度复核
-
-| 结论 | detective 标 | reviewer 重标 | 重标依据 | 差异原因 |
-|---|---|---|---|---|
-| 隐私是主要阻力 | 强 | 中 | 严格只算主动展开论述的访谈,共 4/22(detective 把『一笔带过隐私』也算上了) | detective 边界过宽 |
-```
-
-**关键约束**:
-- 「重标依据」列必须填具体数字 / 来源 / 边界条件,不能空——空 = 二次自标,达不到 H6 防御目的
-- 重标必须从 wiki 重读,不要拿 detective 的等级当起点
-- 差异 ≥ 2 个结论时,自动至少一个 weakened(同人评同人误差不该这么小)
-
-复核表 lint 会查:存在性 + 「重标依据」列 + 每行依据非空。
-
-### 步骤 4：出具审查意见
-
-对每个核心结论，给出判定：
-
-- **confirmed**：主动搜了反面证据，没找到能推翻它的。结论经得起对抗。
-- **weakened**：找到了反面证据，结论需要加限定条件或降低置信度。
-- **challenged**：找到了强反面证据，结论可能是错的。
-
-将审查结果保存到 CONTEXT 速读卡声明的"产出位置"下的 `review.md`（默认 `outputs/review.md`）。
-
-### 步骤 5：回写 wiki（仅 wiki 模式）
-
-审查中发现的反例和盲区是**最高质量的知识**——它们经过了主动对抗才浮现。这些必须回写到 wiki，否则下一次分析会重蹈覆辙。
-
-回写来源编号统一用 `#review_YYYYMMDD`（YYYYMMDD 为审查日期）。回写边界和格式遵循 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)（wiki 页面结构见 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)）。
-
-具体执行：
-
-1. **被推翻或弱化的结论** → 追加到 `wiki/contradictions.md`，类型标「分析 vs 反例」：
-   - 正方：被审查的结论原文 + 来源 `#analysis_YYYYMMDD`
-   - 反方：审查中找到的反面证据 + 原始资料编号
-   - 类型/发现来源：`#review_YYYYMMDD`
-
-2. **审查中找到的反例引用** → 追加到 `wiki/quotes.md` 对应主题分组下，类型标「反例」，标注 `#review_YYYYMMDD` + 原始资料编号（说明这条反例其实来自 #interview_xx，但是审查时才被发现）
-
-3. **被发现的样本盲区**（如"轻度用户视角缺失""某年龄段未覆盖"） → 追加到 `wiki/uncategorized.md`，标「类型：覆盖盲区 / 来源：#review_YYYYMMDD」。盲区是 detective 下次做盲区扫描的输入，不需要再在 `_index.md` 重复
-
-4. **被反驳的理论预测** → 更新 `wiki/frameworks.md` 中对应理论的「验证状态」为「被反驳」，追加 `#review_YYYYMMDD`
-
-5. **不回写的内容**：
-   - confirmed 的结论不需要回写——结论本身已经在报告里
-   - 报告的措辞批评、风格问题——这些是产出形态，不是知识
-   - 已经被报告自己标注"待验证"的弱结论——报告已经自我限定了
-
-回写后更新 `wiki/_log.md`：`[YYYY-MM-DD] 审查回写 #review_YYYYMMDD：新增矛盾 K / 新增反例 N / 新增盲区 M / 反驳理论 J`。
-
-**关键原则**：审查回写**只追加，不修改**。即使发现某条原始资料引用被 detective 误读，也不能修改主题页「证据」栏的原条目——而是在「分析增量」栏新增一条 `#review_YYYYMMDD 修正：原 #analysis_xxx 对 #interview_yy 的解读有误，原话其实是 [...]`。保留误读的痕迹，下次分析才能看到判断的演化。
-
-## 产出格式：`outputs/review.md`
-
-严格遵循以下结构：
-
-```markdown
-# 对抗性审查
-
-**审查对象**: [报告文件名]
-**审查日期**: [日期]
-**本批审查范围**: 本批审查 N 条 / 报告总核心结论 K 条;先审这 N 条的理由:[承重权重 / 推翻则报告失效 / 用户优先级]。剩余 K-N 条若需审查,后续追加批次。
-**核心结论筛选模式**: multi-agent 采样取交集 / 降级单 LLM(原因:...)/ 快速审(用户指定)
-
-## 采样一致性(multi-agent 模式必填,降级时写"略 — 单 LLM 模式")
-
-| 候选结论 | 出现次数 | 判定 |
-|---|---|---|
-| ... | 3/3 / 2/3 / 1/3 | ✅ 强 / ⚠ 中 / 进附加发现 |
-
-## 审查的核心结论(本批)
-1. [结论1原文]
-2. [结论2原文]
-...(每批 ≤ 3 条;不要为凑数硬升级,小报告 1 条就 1 条)
-
-## 结论 1:[结论简述]
-
-**判定:confirmed / weakened / challenged**
-
-**搜索记录:**(强制结构,confirmed 至少 3 轮 + 2+ 个一手编号)
-
-- 第 1 轮: `grep -i "..." data/*.md` → 命中 #interview_07, #interview_22
-  - #interview_07 原话: "[贴 30-60 字原文摘录]"
-  - #interview_22 原话: "[贴 30-60 字原文摘录]"
-- 第 2 轮: 读 wiki/uncategorized.md L23-L40 → [概述命中内容]
-- 第 3 轮: [搜过哪里] → [命中或未命中,具体到行号 / 文件位置]
-
-**反面证据(weakened / challenged 时必填):**
-
-- [具体引用 / 数据,标注来源编号],与结论矛盾,因为...
-
-**未找到反面证据(confirmed 时必填):**
-
-- 搜了 3 轮,覆盖了 [哪些角度],未发现能推翻结论的证据
-
-## 结论 2:[结论简述]
-...
-
-## 证据强度复核(对抗 H6 自标自查,所有结论必填)
-
-| 结论 | detective 标 | reviewer 重标 | 重标依据 | 差异原因 |
-|---|---|---|---|---|
-| [结论1简述] | 强 | 中 | [reviewer 独立判定的具体计数 / 来源 / 边界] | [若有差异,说原因] |
-| [结论2简述] | ... | ... | ... | ... |
-
-## 交付检查
-- [ ] 报告是否回答了 CONTEXT.md 中的所有研究问题？（逐个列出，标 ✅/❌）
-- [ ] 是否触碰 CONTEXT 速读卡声明的"底线"？（逐条对照，标 ✅/❌）
-- [ ] 引用是否限定在 CONTEXT 参考资料和 README 入库范围内？超出的是否显式标注？
-- [ ] 结论的覆盖范围是否写明？（"全样本""新手分群"等，无"用户都……"无限定表述）
-- [ ] 是否存在报告中有但证据中没有的结论？（越界推断检查）
-- [ ] 措辞强度是否与证据强度匹配？（"几乎确定"是否真的有充分证据？）
-- [ ] 判断词（重要/严重/边缘/主流等）是否能用 CONTEXT 声明的"我的身份"对应的方法学语言解释？
-- [ ] **跑一次 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py <报告文件>`**：红线 0 处？黄线已逐条人工复核给出非套路理由？输出（红线/黄线计数 + 命中行号）粘贴到本节作为证据。lint 覆盖 17 条机器可查规则（11 红 6 黄），按 5 层组织——完整对照见 [writing_style.md 第七节](../research-detective/guides/writing_style.md)。论证层（建议悬空 / 标题非 finding / 稻草人 / 同义词堆叠 / 用户语气倾向 / 论证层春秋笔法）仍需人工对照
-- [ ] **跑一次 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-reviewer/scripts/lint_review.py outputs/review.md`**:**退出码 0** 才能交付。验:每个结论的「**搜索记录**」段、confirmed 的 3 轮 + 2 编号门槛、weakened/challenged 的「**反面证据**」段、整文档的「证据强度复核」表 + 「重标依据」列非空——这是反幻觉 H12(留足迹)+ H6(跨角色复核)的机器化检查
-- [ ] 报告是否真的执行了 [research-detective/guides/research_methodology.md](../research-detective/guides/research_methodology.md) 的五个侦探动作（全量记忆编码 / 盲区扫描 / 全局关联 / 矛盾审计 / 证据强度评估），还是只套了报告模板？任一动作没落地（如全报告无反面证据 = 矛盾审计缺失，无样本偏差标注 = 盲区扫描缺失）即标 ❌ 并指出缺失的动作
-
-## 附加发现（可选）
-[搜索过程中意外发现的、报告没提到但可能有价值的信息]
-```
-
-## 效率规则
-
-- **每批 ≤ 3 个核心结论**,不做全面审查。多课题 / 战略级报告核心结论超过 3 条时,**分批审**(批次 1 → 出 review.md → 批次 2 追加),不是把每条压扁成 5 分钟浅扫。**每条结论的对抗深度比覆盖广度更重要**——confirmed 是"试图推翻而失败",这只有在认真搜过 3 轮反面证据时才成立
-- 每个结论最多搜 3 轮反面证据
-- 如果报告自己已经标注了"证据不足"或"待验证",不要对同一个点再提 weakened——报告已经自我限定了
-- 搜索过程中发现的意外信息放在"附加发现"里
-- **不要为了凑出 3 条而硬升级**:如果一份小报告就 1 条核心结论,就审 1 条。审查份数 ≠ 审查质量
-- **multi-agent 采样的 token 成本**:核心结论提取走 3 个 subagent 时,token 约 3×。对外发布报告 / 决策依据级 / 高 stake 审查值得;低 stake 内部探索可让用户显式说"快速审"降级到单 LLM
-
-## 什么是好的对抗性审查
-
-- **confirmed 是最有价值的结果**——"我试图推翻但失败了"比"看起来没问题"有说服力得多
-- **weakened 要具体**——不是"证据偏弱"，而是"找到了 #xxx 说了相反的话，具体是..."
-- **challenged 要有强证据**——不是"我觉得可能不对"，而是"有 N 个用户明确说了相反的话"
+- 核心结论筛选：加载 [workflows/claim_extraction.md](workflows/claim_extraction.md)。
+- 反面证据搜索与证据强度复核：加载 [workflows/adversarial_review.md](workflows/adversarial_review.md)。
+- 审查输出结构、效率规则和交付检查：加载 [guides/reviewer_output_format.md](guides/reviewer_output_format.md)。
+- wiki 回写：仅在需要追加反例、盲区、理论反驳或误读修正时加载 [workflows/review_writeback.md](workflows/review_writeback.md)。
+- 对照被审报告写作质量时，使用 `python3 ${CLAUDE_SKILL_DIR}/../research-detective/scripts/lint_report.py <报告文件>`。
+- 交付 review 前，运行 `python3 ${CLAUDE_SKILL_DIR}/scripts/lint_review.py outputs/review.md`，exit 0 才能交付。

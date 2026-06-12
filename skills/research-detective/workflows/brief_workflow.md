@@ -4,7 +4,7 @@
 
 产出形态:**A1 + A2**(主线),按需追加 **B1 信息包**(扩展)。
 
-> 这是 detective 两条产出工作流之一,另一条是 [report_workflow.md](report_workflow.md)。SKILL.md 步骤 4 根据用户意图路由到这里。
+> 这是 detective 两条产出工作流之一，另一条是 [report_workflow.md](report_workflow.md)。由 `research-detective/SKILL.md` 的产出形态路由按用户意图加载。
 
 ## 1. 主线产出:A1 + A2
 
@@ -29,7 +29,7 @@
 ### 1.4 lint(写完跑)
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_report.py outputs/evidence_chain.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_report.py outputs/evidence_chain.md
 ```
 
 A1 因为只在对话输出,不进 lint 体检——但 A1 用词同样要遵守红线(尤其禁词组、N<30 用百分比、概念癌)。
@@ -57,7 +57,7 @@ A1+A2 已完成。没有结论就没有包可打。
 ### 2.4 lint(生成完跑)
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/research-detective/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint_information_pack.py outputs/information_pack_<slug>.md
 ```
 
 红线 0 处才能交付。详见契约 §7。
