@@ -1,6 +1,6 @@
 # 侦探分析工作流
 
-执行侦探动作 3a-3e 前加载本文件。不要摘要化或跳过：`scripts/lint_process.py` 会校验这些中间产物。
+执行侦探动作 3a-3e 前加载本文件。不要摘要化或跳过：`scripts/lint_process.py` 会校验方法选择和这些中间产物。
 
 ### 步骤 3：侦探分析（核心差异化）
 
@@ -8,10 +8,11 @@
 
 **强制中间产物结构(机器可验)**:
 
-五个侦探动作 3a-3e 的产物**必须分写入 5 个独立文件**,不能糊在一个 detective_analysis.md 里。这是为了反幻觉 H12(表面合规)——LLM 不能靠"已完成盲区扫描"一句话蒙混过关,机器要能验产物。
+方法选择和五个侦探动作 3a-3e 的产物**必须分写入 6 个独立文件**,不能糊在一个 detective_analysis.md 里。这是为了反幻觉 H12(表面合规)——LLM 不能靠"已完成盲区扫描"一句话蒙混过关,机器要能验产物。
 
 | 文件 | 对应动作 | 最低字段(lint_process.py 强制) |
 | --- | --- | --- |
+| `process/0_method_selection.md` | 方法选择 | 写出研究类型、选用工具、未选工具及理由；至少包含 1 个工具编号 |
 | `process/3a_coding.md` | 全量记忆编码 | 至少 5 条 `#interview_*` / `#survey_*` 引用(wiki 模式可不存在) |
 | `process/3b_blind_spots.md` | 盲区扫描 | 至少 3 条「低频高强度」/「沉默信号」/「应出现但缺失」(无盲区时显式写「搜了 X、Y、Z 三个角度均未发现」) |
 | `process/3c_associations.md` | 全局关联 | 至少 1 条 N×N 跨主题关联描述(无关联时写「比对了 N 对主题,未发现共变」) |
@@ -26,6 +27,7 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/  # wiki
 
 **执行细节与按需工具(落笔前先读)**:
 
+- 方法入口见 [method_index.md](../guides/method_index.md)：先判断课题类型，写 `process/0_method_selection.md`
 - 五个侦探动作的补充标准见 [research_methodology.md](../guides/research_methodology.md)：置信度、备忘录格式和方法关系
 - 26 个分析工具见 [detective_toolkit.md](../guides/detective_toolkit.md) 末尾速查表；按课题类型挑工具，不要默认全跑
 - 各小节末尾的「⮕ 工具触发」是常见场景下推荐加载的具体工具号,看到对应信号就去 toolkit 查那一节
@@ -42,6 +44,18 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/  # wiki
 - 需要深度统计分析（相关性、回归、贡献度）时，用 Python 回到 `data/` 的原始 CSV 计算，LLM 解读结果
 
 **如果没有 wiki/**：在步骤 2 的提取结果上执行侦探动作。
+
+
+#### 3.0 方法选择
+
+在执行 3a-3e 前，先写 `process/0_method_selection.md`，显性记录本次侦探方法论如何参与：
+
+- 研究类型：从工具箱速查表中选择最贴近的一类，或说明是混合型
+- 选用工具：列出工具编号、名称、层级，以及会用在 3a-3e 哪一步
+- 未选工具及理由：至少列 2 个不选的高成本/不适用工具，防止默认全跑
+- 方法风险：记录最可能的证据缺口、偏误风险和下一步验证
+
+格式见 [method_index.md](../guides/method_index.md) §4。
 
 #### 3a. 全量记忆编码
 
@@ -103,4 +117,4 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/  # wiki
 | **高频** | 🔴 最高优先级 | 🟡 体验优化 |
 | **低频** | 🟠 特定分群重要 | ⚪ 记录但降低优先级 |
 
-中间产物按上面表格分写入 `process/3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md` 五个文件,不要糊在一份 detective_analysis.md 里——分文件让机器 lint 能验产物质量。用户分群应从矛盾审计和关联发现中涌现,不要用关键词硬分。
+中间产物按上面表格分写入 `process/0_method_selection.md` / `3a_coding.md` / `3b_blind_spots.md` / `3c_associations.md` / `3d_contradictions_audit.md` / `3e_evidence_chains.md` 六个文件,不要糊在一份 detective_analysis.md 里——分文件让机器 lint 能验产物质量。用户分群应从矛盾审计和关联发现中涌现,不要用关键词硬分。

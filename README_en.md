@@ -21,6 +21,30 @@ A researcher's biggest bottleneck isn't methodology — interview analysis, surv
 
 The Detective Method doesn't replace traditional research methods — it adds a meta-analysis layer on top of them, with five "detective moves" that systematically cover these blind spots.
 
+
+## Core Innovations
+
+This tool is not a generic AI summarizer for interview notes. It makes the research reasoning process explicit and checkable through detective mechanisms:
+
+| Innovation | Problem It Solves | Visible Artifact / Mechanism |
+| --- | --- | --- |
+| **Detective Method** | Theme summaries miss blind spots, contradictions, and anomalies | Five detective moves + detective memo |
+| **26-tool toolkit** | Different research questions need different analytical frames | Select tools before analysis; record `process/0_method_selection.md` |
+| **LLM_wiki** | Large corpora cannot be re-read from scratch every time | Continuously growing markdown wiki |
+| **Adversarial review loop** | Plausible conclusions may still be wrong | reviewer finds counterevidence → detective revises → wiki write-back |
+| **Evidence-chain map** | Conclusions often drift away from their evidence | Support, counterevidence, confidence, and boundaries for each core claim |
+| **AI handoff pack** | Downstream AI may misuse or overextend research conclusions | Structured handoff with IDs, negative list, and unresolved questions |
+
+The five detective moves are the minimum loop for formal analysis:
+
+| Detective Move | Purpose |
+| --- | --- |
+| **Full-memory encoding** | Preserve cross-material comparison instead of forgetting earlier sources |
+| **Blind-spot scan** | Find missing voices, low-frequency high-impact signals, and expected-but-absent evidence |
+| **Global association discovery** | Find hidden links across materials, segments, and data types |
+| **Contradiction audit** | Find conflicts between speech and behavior, sources, and conclusions vs evidence |
+| **Evidence-chain tracing** | Attach support, counterevidence, confidence, and boundaries to each conclusion |
+
 ## Does it actually work
 
 Validated on a real project with 250+ user interviews and surveys. **The case is anonymized and the raw data is not published** — the findings below are illustrative, not an independently reproducible benchmark:
@@ -45,10 +69,10 @@ Raw material
                                       │
                 ┌─────────────────────┴─────────────────────┐
                 ▼                                           ▼
-     ① Brief form (for a specific question)      ② Full research report
-        A1 one-page summary                          + detective memo
-        A2 evidence-chain map                            │
-        B1 info pack (optional, for downstream AI)        ▼
+     ① Research brief (specific question)        ② Deep analysis report
+        Research brief + evidence-chain map        + detective memo
+        AI handoff pack (optional, downstream AI)        │
+                                                          ▼
                                        [research-reviewer: adversarial review] (on demand)
                                                           │
                                                           ▼
@@ -56,7 +80,7 @@ Raw material
 ```
 
 - **research-archivist**: incrementally ingests raw material into a structured wiki knowledge base (the **LLM_wiki** methodology: analysis works directly on "compiled knowledge" instead of re-reading source files each time; the wiki keeps growing with every analysis). Can be skipped for ≤50 documents.
-- **research-detective**: runs five detective moves on the wiki (or `data/`) — full-memory encoding, blind-spot scan, global association discovery, contradiction audit, evidence-chain tracing. Produces one of two outputs: ① a brief (A1+A2, optional B1); ② a full report + detective memo.
+- **research-detective**: runs five detective moves on the wiki (or `data/`) — full-memory encoding, blind-spot scan, global association discovery, contradiction audit, evidence-chain tracing. Produces one of two outputs: ① a research brief + evidence-chain map (optional AI handoff pack); ② a deep analysis report + detective memo + evidence-chain map (optional AI handoff pack).
 - **research-reviewer**: adversarially validates a full report, filtering core conclusions by the standard "if it can be overturned, the report fails," ruling each as confirmed / weakened / challenged, after which the detective revises accordingly.
 
 ## Install
@@ -188,21 +212,21 @@ For full research reports, playing the "fact-checker" role:
 - Rules each conclusion: confirmed (survives the adversary) / weakened (needs qualifying conditions) / challenged (may be wrong)
 - The detective revises accordingly; weakened or overturned judgments are written back to the wiki's "analysis increment" column, tagged `#review_YYYYMMDD`, **preserving the evolution of judgment**
 
-The brief form (A1+A2) currently doesn't go through reviewer. The report form is strongly recommended for external publication, decision-making, or when evidence strength is in doubt.
+The research brief form (research brief + evidence-chain map) currently does not go through reviewer. The deep analysis report form is strongly recommended for external publication, decision-making, or when evidence strength is in doubt.
 
 **Writing-style constraints** (writing layer · self-check before and after drafting)
 
 Before and after drafting, the researcher self-checks against [writing_style.md](skills/research-detective/guides/writing_style.md) + [report_principles.md](skills/research-detective/guides/report_principles.md) to block the typical patterns of AI writing (concept-itis, straw men, weasel wording, end-of-section punchlines, etc.) along with quantitative discipline. The machine-checkable parts are auto-run by scripts as a backstop; structural issues still require a human walkthrough of the checklist.
 
-### 4. B1 info pack: AI-to-AI decision-context delivery
+### 4. AI handoff pack: AI-to-AI decision-context delivery
 
-Research output gets consumed by downstream AI workflows — a product AI writing a PRD, a design AI producing options, a strategy AI planning. The B1 info pack is a structured envelope designed for this delivery step:
+Research output gets consumed by downstream AI workflows — a product AI writing a PRD, a design AI producing options, a strategy AI planning. The AI handoff pack is a structured envelope designed for this delivery step:
 
 - Not raw material, but the researcher's extraction of material into **decision slices** — user segments / pain-point lists / design constraints / scenario success states. Downstream AI uses them directly, without having to do the "raw evidence → action seed" conversion itself
 - Comes with a **negative list** and **unresolved questions** as guardrails — explicitly telling downstream AI which conclusions can't be extrapolated and which areas the research didn't cover
 - Comes with an **AI operating protocol** — every citation carries an ID, cross-ID integrity is machine-verifiable
 
-Triggered on demand after a brief or report is complete; the researcher packages it via a conversational command. On generation, a **B1 structure lint runs automatically** as a backstop (no leftover placeholders / all cross-ID citations resolve / required sections non-empty). Full contract in [contracts/information_pack.md](contracts/information_pack.md).
+Triggered on demand after a brief or report is complete; the researcher packages it via a conversational command. On generation, an **AI handoff pack structure lint runs automatically** as a backstop (no leftover placeholders / all cross-ID citations resolve / required sections non-empty). Full contract in [contracts/information_pack.md](contracts/information_pack.md).
 
 ## Operations & troubleshooting
 
@@ -227,7 +251,7 @@ ai-research-detective/                   # repo root = plugin root
 ├── contracts/                           # shared contracts across skills / boundaries
 │   ├── wiki_format.md                   # wiki page format
 │   ├── analysis_writeback.md            # analysis write-back rules
-│   └── information_pack.md              # B1 info-pack contract
+│   └── information_pack.md              # AI handoff pack contract
 ├── shared/                              # resources shared by all three skills (not a skill)
 │   ├── CLAUDE.md                        # project-level hard constraints
 │   ├── cold_start.md                    # cold-start flow
@@ -240,8 +264,8 @@ ai-research-detective/                   # repo root = plugin root
     ├── research-detective/
     │   ├── SKILL.md                     # general flow + step 4 routes to a workflow
     │   ├── workflows/                   # brief / report output workflows
-    │   ├── guides/                      # detective methodology + 26-tool toolkit + writing rules
-    │   ├── templates/                   # report / A1 / A2 / B1 templates
+    │   ├── guides/                      # method index + detective methodology + 26-tool toolkit + writing rules
+    │   ├── templates/                   # report / research brief / evidence-chain map / AI handoff pack templates
     │   └── scripts/                     # lint_report / lint_information_pack / lint_process + tests
     └── research-reviewer/
         ├── SKILL.md
@@ -258,7 +282,7 @@ Feedback, suggestions, and code contributions are welcome via [GitHub Issues](ht
 
 ## Acknowledgements
 
-- **LLM Wiki pattern** — this tool's ingestion + analysis architecture is based on Andrej Karpathy's [llm-wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): treating the LLM as a "compiler" and maintaining a continuously growing markdown knowledge base. This tool builds a research-methodology layer on top (detective moves, adversarial review, B1 info pack, strict material/interpretation separation).
+- **LLM Wiki pattern** — this tool's ingestion + analysis architecture is based on Andrej Karpathy's [llm-wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): treating the LLM as a "compiler" and maintaining a continuously growing markdown knowledge base. This tool builds a research-methodology layer on top (detective moves, adversarial review, AI handoff pack, strict material/interpretation separation).
 - The English AI-pattern detection in **writing-style lint** references the patterns from [blader/humanizer](https://github.com/blader/humanizer) (based on Wikipedia's "Signs of AI writing"); the Chinese research-report-specific rules are original to this project.
 
 ## License

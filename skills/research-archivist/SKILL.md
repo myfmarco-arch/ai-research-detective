@@ -62,13 +62,13 @@ allowed-tools: [Read, Grep, Glob, AskUserQuestion]
 
 ### 步骤 3：入库回检路由
 
-入库或增量更新完成后，加载 [workflows/intake_validation.md](workflows/intake_validation.md)。必须运行 `python3 ${CLAUDE_SKILL_DIR}/scripts/verify_quotes.py wiki`，并完成人工抽查 3 份；通过后才能告诉用户 wiki 已就绪。
+入库或增量更新完成后，加载 [workflows/intake_validation.md](workflows/intake_validation.md)。必须运行 `python3 ${CLAUDE_SKILL_DIR}/scripts/verify_quotes.py wiki` 和 `python3 ${CLAUDE_SKILL_DIR}/scripts/lint_source_coverage.py wiki`，并完成人工抽查 3 份；通过后才能告诉用户 wiki 已就绪。
 
 ## 资源地图（按需加载）
 
 - 首次建库或完整入库：加载 [workflows/intake_workflow.md](workflows/intake_workflow.md)。
 - 增量更新：加载 [workflows/incremental_update.md](workflows/incremental_update.md)。
-- 入库回检：加载 [workflows/intake_validation.md](workflows/intake_validation.md)。
+- 入库回检：加载 [workflows/intake_validation.md](workflows/intake_validation.md)，同时校验引用真实性和逐份资料覆盖深度。
 - 创建或编辑 wiki 页、处理回写边界、检查主题命名时：加载 [guides/wiki_quality_rules.md](guides/wiki_quality_rules.md)。
 - wiki 页面格式遵循 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)。
 - detective/reviewer 分析回写遵循 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md)。

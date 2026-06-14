@@ -2,20 +2,20 @@
 
 适用场景:用户问了一个**具体问题**,没有说"写报告""出报告""生成报告"。
 
-产出形态:**A1 + A2**(主线),按需追加 **B1 信息包**(扩展)。
+产出形态：**研究简报 + 证据链图谱**（主线），按需追加 **AI 接力包**（扩展）。
 
 > 这是 detective 两条产出工作流之一，另一条是 [report_workflow.md](report_workflow.md)。由 `research-detective/SKILL.md` 的产出形态路由按用户意图加载。
 
-## 1. 主线产出:A1 + A2
+## 1. 主线产出：研究简报 + 证据链图谱
 
-### 1.1 A1 一页摘要
+### 1.1 研究简报
 
 - 直接在对话中回答,按 [../templates/answer_summary.md](../templates/answer_summary.md) 结构。
 - **控制在 300 字以内,最多不超过 500 字**。
 - 建议部分必须结合 CONTEXT.md 给出针对性建议——不允许通用建议表。
-- A1 **只在对话中输出,不保存文件**(简报形态下,A1 是对话级产物)。
+- 研究简报**只在对话中输出，不保存文件**（简报形态下，研究简报是对话级产物；文件名 `answer_summary.md` 仅在深度分析报告形态中兼容保留）。
 
-### 1.2 A2 证据链图谱
+### 1.2 证据链图谱
 
 - **必须严格按** [../templates/evidence_chain.md](../templates/evidence_chain.md) **的表格格式**(证据节点表 + 关系表 + 强度摘要)。不要用自由格式替代。
 - 保存到 CONTEXT 速读卡声明的"产出位置"下的 `evidence_chain.md`(默认 `outputs/evidence_chain.md`)。
@@ -32,19 +32,19 @@
 python3 ${CLAUDE_SKILL_DIR}/scripts/lint_report.py outputs/evidence_chain.md
 ```
 
-A1 因为只在对话输出,不进 lint 体检——但 A1 用词同样要遵守红线(尤其禁词组、N<30 用百分比、概念癌)。
+研究简报因为只在对话输出，不进 lint 体检——但研究简报用词同样要遵守红线(尤其禁词组、N<30 用百分比、概念癌)。
 
-## 2. 扩展产出:B1 信息包(按需)
+## 2. 扩展产出：AI 接力包（按需）
 
 ### 2.1 何时启动
 
-简报完成后,用户**明确说**"打个包""给下游 AI 用""做信息包""给产品/设计/战略 AI"时启动。或者步骤 6 反馈环节,detective 主动建议、用户确认。
+研究简报完成后,用户**明确说**"打个包""给下游 AI 用""做 AI 接力包""给产品/设计/战略 AI"时启动。或者步骤 6 反馈环节,detective 主动建议、用户确认。
 
-**不要默认生成**——A1+A2 在团队内消化是常态,真要给下游 AI 的是少数。
+**不要默认生成**——研究简报 + 证据链图谱在团队内消化是常态，真要给下游 AI 的是少数。
 
 ### 2.2 前置条件
 
-A1+A2 已完成。没有结论就没有包可打。
+研究简报 + 证据链图谱已完成。没有结论就没有包可打。
 
 ### 2.3 完整契约见
 
@@ -52,7 +52,7 @@ A1+A2 已完成。没有结论就没有包可打。
 
 包含:设计立场、特化方向识别(`general` / `prd` / `design` / `strategy`)、AI 友好产物清理、§3 全证据素材库、§4 决策切片必填要求、§5 成功状态、隐私与时效、跨 ID 完整性 lint、与其他产物的关系。
 
-**生成 B1 前必读这份契约**。模板在 [../templates/information_pack.md](../templates/information_pack.md)。
+**生成 AI 接力包前必读这份契约**。模板在 [../templates/information_pack.md](../templates/information_pack.md)。
 
 ### 2.4 lint(生成完跑)
 
@@ -70,8 +70,8 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_information_pack.py outputs/information
 
 简报形态**不产出**:
 
-- 完整研究报告(走 [report_workflow.md](report_workflow.md))
-- 侦探备忘录(独立报告章节;简报里如有关键盲区/隐藏关联,直接写进 A1 的"侦探备忘录亮点"一条)
+- 深度分析报告（走 [report_workflow.md](report_workflow.md)）
+- 侦探备忘录（独立报告章节；研究简报里如有关键盲区/隐藏关联，直接写进"侦探备忘录亮点"一条）
 - 长篇论证、多章节结构
 
-简报形态**目前不进** research-reviewer 对抗审查(reviewer 当前只支持完整报告形态)。简报对外发布或作为决策依据时,如需对抗验证,可手动让 reviewer 审 A1+A2 文件,但流程是非标的。
+简报形态**目前不进** research-reviewer 对抗审查(reviewer 当前只支持完整报告形态)。简报对外发布或作为决策依据时,如需对抗验证,可手动让 reviewer 审研究简报 + 证据链图谱,但流程是非标的。

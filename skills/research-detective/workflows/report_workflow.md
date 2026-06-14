@@ -2,7 +2,7 @@
 
 适用场景:用户**明确要求深度/完整/正式报告**,如"写报告""出报告""生成报告""深度报告""完整报告""正式报告""长报告""研究报告"。
 
-产出形态:**完整研究报告 + 侦探备忘录**(主体)+ A1 + A2(顺带存盘)。
+产出形态：**深度分析报告 + 侦探备忘录 + 证据链图谱**（主体），并顺带保存研究简报；可选 AI 接力包。
 
 > 这是 detective 两条产出工作流之一，另一条是 [brief_workflow.md](brief_workflow.md)。由 `research-detective/SKILL.md` 的产出形态路由按用户意图加载。
 
@@ -29,19 +29,19 @@
 
 产出位置以 CONTEXT 速读卡的"产出位置"为准(默认 `outputs/`)。下面提到的路径都是默认值,实际写入路径替换为 CONTEXT 声明的位置。
 
-### 1.1 完整报告(主体)
+### 1.1 深度分析报告（主体）
 
 - 严格按 [../templates/simple_report.md](../templates/simple_report.md) 结构产出。
 - 包含侦探备忘录(盲区扫描、隐藏关联、矛盾审计、证据强度)——可在主报告中分散呈现,但分析必须做。
 - 保存到产出位置(默认 `outputs/<报告名>.md`)。
 
-### 1.2 A1 摘要(顺带存盘)
+### 1.2 研究简报（顺带存盘）
 
 - 按 [../templates/answer_summary.md](../templates/answer_summary.md) 结构。
 - **控制在 300-500 字**。
 - 保存到产出位置下的 `answer_summary.md`(默认 `outputs/answer_summary.md`)。
 
-### 1.3 A2 证据链图谱(顺带存盘)
+### 1.3 证据链图谱（顺带存盘）
 
 - 严格按 [../templates/evidence_chain.md](../templates/evidence_chain.md) 的表格格式。
 - 保存到产出位置下的 `evidence_chain.md`(默认 `outputs/evidence_chain.md`)。
@@ -124,8 +124,8 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/
 
 回写规则详见 [../../../contracts/analysis_writeback.md](../../../contracts/analysis_writeback.md)。
 
-## 5. 报告形态也可附加 B1
+## 5. 深度分析报告形态也可附加 AI 接力包
 
-完整报告产出后,如果结论会被下游 AI 工作流消费,同样可以追加 B1 信息包——契约和动作与简报形态完全一致,见 [brief_workflow.md](brief_workflow.md) §2 或直接读 [../../../contracts/information_pack.md](../../../contracts/information_pack.md)。
+完整报告产出后,如果结论会被下游 AI 工作流消费,同样可以追加 AI 接力包——契约和动作与简报形态完全一致,见 [brief_workflow.md](brief_workflow.md) §2 或直接读 [../../../contracts/information_pack.md](../../../contracts/information_pack.md)。
 
-报告形态生成 B1 时,frontmatter `generated_from.full_report` 指向报告路径(简报形态此字段为 `null`)。
+深度分析报告形态生成 AI 接力包时,frontmatter `generated_from.full_report` 指向报告路径(简报形态此字段为 `null`)。

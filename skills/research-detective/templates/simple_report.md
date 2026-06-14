@@ -178,7 +178,7 @@
 - B. 编码主题列表
 - C. 不在主线的有趣发现(放这里,不进正文)
 - D. 数据来源详细说明
-- E. 关联文档:证据链图谱见 evidence_chain.md;一页摘要见 answer_summary.md
+- E. 关联文档:证据链图谱见 evidence_chain.md;研究简报见 answer_summary.md
 -->
 
 ### A. 样本清单

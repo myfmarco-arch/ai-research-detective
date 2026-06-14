@@ -127,7 +127,7 @@ MD_OUT=$(python3 skills/research-detective/scripts/lint_report.py --format=md sk
 assert_contains "md format has heading" "# Lint:" "$MD_OUT"
 assert_contains "md format has FAIL" "**FAIL**" "$MD_OUT"
 
-# ---------- 8. B1 lint: fixture_pack_good.md ----------
+# ---------- 8. AI 接力包 lint: fixture_pack_good.md ----------
 echo ""
 echo "=== 8. lint_information_pack.py · fixture_pack_good.md (期望干净通过) ==="
 PACK_GOOD_OUT=$(python3 skills/research-detective/scripts/lint_information_pack.py skills/research-detective/scripts/tests/fixture_pack_good.md 2>&1)
@@ -135,7 +135,7 @@ PACK_GOOD_EXIT=$?
 assert_exit "pack good fixture exits 0" 0 "$PACK_GOOD_EXIT"
 assert_contains "pack good fixture says OK" "[OK]" "$PACK_GOOD_OUT"
 
-# ---------- 9. B1 lint: fixture_pack_bad.md ----------
+# ---------- 9. AI 接力包 lint: fixture_pack_bad.md ----------
 echo ""
 echo "=== 9. lint_information_pack.py · fixture_pack_bad.md (期望红线全中) ==="
 PACK_BAD_OUT=$(python3 skills/research-detective/scripts/lint_information_pack.py skills/research-detective/scripts/tests/fixture_pack_bad.md 2>&1)
@@ -145,14 +145,14 @@ for rule in C1 C2 C4 C6 I1 S2 S3 S4 S5; do
     assert_contains "pack bad fixture hits $rule" "[$rule" "$PACK_BAD_OUT"
 done
 
-# ---------- 10. B1 lint: 不存在的文件 ----------
+# ---------- 10. AI 接力包 lint: 不存在的文件 ----------
 echo ""
 echo "=== 10. lint_information_pack.py · 不存在的文件 (期望 exit 2) ==="
 PACK_NOEXIST_OUT=$(python3 skills/research-detective/scripts/lint_information_pack.py /tmp/__no_such_pack_8881.md 2>&1)
 PACK_NOEXIST_EXIT=$?
 assert_exit "missing pack file exits 2" 2 "$PACK_NOEXIST_EXIT"
 
-# ---------- 11. B1 lint: 缺 frontmatter (期望 exit 2) ----------
+# ---------- 11. AI 接力包 lint: 缺 frontmatter (期望 exit 2) ----------
 echo ""
 echo "=== 11. lint_information_pack.py · 缺 frontmatter (期望 exit 2) ==="
 TMP_NO_FM=$(mktemp -t pack_no_fm.XXXX.md)
@@ -176,7 +176,7 @@ echo "=== 13. lint_process.py · fixture_process_bad (期望红线全中) ==="
 PROC_BAD_OUT=$(python3 skills/research-detective/scripts/lint_process.py skills/research-detective/scripts/tests/fixture_process_bad 2>&1)
 PROC_BAD_EXIT=$?
 assert_exit "process bad fixture exits 1" 1 "$PROC_BAD_EXIT"
-for rule in P_THIN_3A P_THIN_3B P_MISSING_3D P_MISSING_3E; do
+for rule in P_THIN_0_METHOD P_THIN_3A P_THIN_3B P_MISSING_3D P_MISSING_3E; do
     assert_contains "process bad fixture hits $rule" "[$rule" "$PROC_BAD_OUT"
 done
 
@@ -186,6 +186,7 @@ echo "=== 14. lint_process.py · bad --wiki-mode (3a 放宽,其他必抓) ==="
 PROC_WIKI_OUT=$(python3 skills/research-detective/scripts/lint_process.py --wiki-mode skills/research-detective/scripts/tests/fixture_process_bad 2>&1)
 PROC_WIKI_EXIT=$?
 assert_exit "wiki-mode bad exits 1 (3b/3d/3e 仍 fail)" 1 "$PROC_WIKI_EXIT"
+assert_contains "wiki-mode 仍抓 0_method 过薄" "P_THIN_0_METHOD" "$PROC_WIKI_OUT"
 assert_contains "wiki-mode 仍抓 3d 缺失" "P_MISSING_3D" "$PROC_WIKI_OUT"
 
 # ---------- 15. lint_process.py: 不存在的目录 ----------
@@ -194,6 +195,37 @@ echo "=== 15. lint_process.py · 不存在的目录 (期望 exit 2) ==="
 PROC_NOEXIST_OUT=$(python3 skills/research-detective/scripts/lint_process.py /tmp/__no_such_process_8881 2>&1)
 PROC_NOEXIST_EXIT=$?
 assert_exit "missing process dir exits 2" 2 "$PROC_NOEXIST_EXIT"
+
+# ---------- 16. 用户可见旧代号残留检查 ----------
+echo ""
+echo "=== 16. 用户可见旧代号残留检查 (期望无 A1/A2/B1) ==="
+LEGACY_OUT=$(python3 - <<'PY'
+from pathlib import Path
+import re
+files = [Path('README.md'), Path('README_en.md'), Path('contracts/information_pack.md')]
+files += list(Path('skills/research-detective').glob('SKILL.md'))
+files += list(Path('skills/research-detective/workflows').glob('*.md'))
+files += list(Path('skills/research-detective/guides').glob('*.md'))
+files += list(Path('skills/research-detective/templates').glob('*.md'))
+allow = {Path('skills/research-detective/guides/method_index.md')}
+pattern = re.compile(r'\bA1\b|\bA2\b|\bB1\b|一页摘要|B1 信息包|B1 lint|info pack|one-page summary')
+hits = []
+for p in files:
+    if p in allow:
+        continue
+    text = p.read_text(encoding='utf-8')
+    for i, line in enumerate(text.splitlines(), 1):
+        if pattern.search(line):
+            hits.append(f'{p}:{i}:{line.strip()}')
+print('\n'.join(hits))
+raise SystemExit(1 if hits else 0)
+PY
+)
+LEGACY_EXIT=$?
+assert_exit "legacy visible names absent" 0 "$LEGACY_EXIT"
+if [ -n "$LEGACY_OUT" ]; then
+    echo "$LEGACY_OUT" | sed 's/^/    /'
+fi
 
 # ---------- 总结 ----------
 echo ""

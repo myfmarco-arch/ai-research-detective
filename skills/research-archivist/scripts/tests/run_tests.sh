@@ -55,6 +55,7 @@ assert_not_contains() {
 }
 
 SCRIPT="skills/research-archivist/scripts/verify_quotes.py"
+COV_SCRIPT="skills/research-archivist/scripts/lint_source_coverage.py"
 GOOD="skills/research-archivist/scripts/tests/fixture_wiki_good/wiki"
 BAD="skills/research-archivist/scripts/tests/fixture_wiki_bad/wiki"
 
@@ -110,6 +111,23 @@ else
     echo "$QUIET_OUT" | head -3 | sed 's/^/    /'
     FAIL=$((FAIL + 1))
 fi
+
+# ---------- 6. 覆盖台账 good fixture ----------
+echo ""
+echo "=== 6. lint_source_coverage.py · fixture_wiki_good (期望 PASS) ==="
+COV_GOOD_OUT=$(python3 "$COV_SCRIPT" "$GOOD" 2>&1)
+COV_GOOD_EXIT=$?
+assert_exit "coverage good fixture exits 0" 0 "$COV_GOOD_EXIT"
+assert_contains "coverage good fixture says PASS" "PASS" "$COV_GOOD_OUT"
+
+# ---------- 7. 覆盖台账 bad fixture ----------
+echo ""
+echo "=== 7. lint_source_coverage.py · fixture_wiki_bad (期望 fail) ==="
+COV_BAD_OUT=$(python3 "$COV_SCRIPT" "$BAD" 2>&1)
+COV_BAD_EXIT=$?
+assert_exit "coverage bad fixture exits 1" 1 "$COV_BAD_EXIT"
+assert_contains "coverage bad catches low extraction" "COV_LOW_NO_REASON" "$COV_BAD_OUT"
+assert_contains "coverage bad catches missing source" "COV_SOURCE_MISSING" "$COV_BAD_OUT"
 
 # ---------- 总结 ----------
 echo ""

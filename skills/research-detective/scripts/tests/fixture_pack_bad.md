@@ -11,7 +11,7 @@ valid_until: "2026-09-08"
 status: "active"
 ---
 
-# 信息包:测试 fixture
+# AI 接力包：测试 fixture
 
 <!-- 这是一段不该留的注释 -->
 

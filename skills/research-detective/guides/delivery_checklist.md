@@ -6,6 +6,7 @@
 
 - [ ] 引用标注了参与者类型而非姓名
 - [ ] 已对照 CONTEXT 的"底线"自检，无触碰
+- [ ] 若产物是深度分析报告，已按风险条件显式建议或说明是否需要 `research-reviewer` 对抗审查
 - [ ] 引用限定在 CONTEXT 参考资料和 README 入库范围内，超出的已显式标注
 
 ## B. 报告规范（13 项 + 15 项，链接到原文档）
@@ -15,7 +16,8 @@
 
 ## C. 侦探方法专属（差异化价值，不能跳）
 
-- [ ] 已对照 [research_methodology.md](research_methodology.md) 完成五个侦探动作（3a 全量记忆编码 / 3b 盲区扫描 / 3c 全局关联 / 3d 矛盾审计 / 3e 证据强度评估），不是只套了报告模板
+- [ ] 已先完成 `process/0_method_selection.md`：研究类型、选用工具、未选工具及理由、方法风险都明确
+- [ ] 已对照 [method_index.md](method_index.md) 和 [research_methodology.md](research_methodology.md) 完成五个侦探动作（3a 全量记忆编码 / 3b 盲区扫描 / 3c 全局关联 / 3d 矛盾审计 / 3e 证据强度评估），不是只套了报告模板
 - [ ] 侦探备忘录已完成（盲区扫描、隐藏关联、矛盾审计、证据强度）——可在主报告中分散呈现，但分析必须做
 - [ ] 反面证据已穿插进每个核心发现，不是只集中在备忘录或附录
 - [ ] 已知样本偏差在受影响的发现旁用 ⚠ 标注，不只放附录免责
@@ -26,7 +28,7 @@
 - [ ] 回写来源标注为 `#analysis_YYYYMMDD`，写入主题页的「分析增量」栏，未污染「证据」栏
 - [ ] `wiki/_log.md` 已追加本次分析的回写记录
 
-## E. B1 信息包（仅在生成了 `information_pack_*.md` 时执行）
+## E. AI 接力包（仅在生成了 `information_pack_*.md` 时执行）
 
 > 机器红线已由 `lint_information_pack.py` 强制（C1-C6 / I1 / S1-S5）；以下是 lint 查不到的语义判断。
 

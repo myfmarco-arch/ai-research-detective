@@ -1,7 +1,7 @@
 # 侦探方法论（Detective Method）
 
 五个侦探动作的主流程在 `workflows/detective_analysis.md`。本文件只补充置信度、备忘录和方法关系。
-26 个分析工具见 [detective_toolkit.md](detective_toolkit.md)（按需加载）。
+方法入口见 [method_index.md](method_index.md)；26 个分析工具见 [detective_toolkit.md](detective_toolkit.md)（正式分析前先看速查表并选择工具）。
 
 ---
 
@@ -53,9 +53,9 @@
 | | 核心流程 + 本文件 | 工具箱（detective_toolkit） |
 | --- | --- | --- |
 | 定位 | 每次分析必做的核心动作 | 按课题类型选用的专业工具 |
-| 加载 | 执行 3a-3e 前加载 | 按需加载 |
+| 加载 | 执行 3a-3e 前加载 | 正式分析前查速查表并选择工具 |
 | 覆盖 | 五个侦探动作 | 26 个工具 + 认知偏误防护 + 速查表 |
 
 工具箱的采集层（工具 1-4）细化证据采集和 3a，结构层（工具 5-19）细化 3b-3c，判断层（工具 20-25）细化 3d-3e，综合层（工具 26）用于最终综合。
 
-需要更精细的分析粒度时（如 ACH 竞争性假设、Toulmin 论证检验、JTBD 需求重构等），加载工具箱并查末尾速查表选择工具组合。
+正式分析前先通过 [method_index.md](method_index.md) 写出 `process/0_method_selection.md`；需要更精细的分析粒度时（如 ACH 竞争性假设、Toulmin 论证检验、JTBD 需求重构等），查工具箱末尾速查表选择工具组合。

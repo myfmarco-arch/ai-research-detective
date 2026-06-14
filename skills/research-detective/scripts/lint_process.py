@@ -2,12 +2,13 @@
 """
 detective 中间产物 lint —— 反幻觉 H12(表面合规)。
 
-侦探动作 3a-3e 必须分写入 5 个独立文件,字段达到最低门槛。
+方法选择和侦探动作 3a-3e 必须分写入 6 个独立文件,字段达到最低门槛。
 LLM 不能糊在一个 detective_analysis.md 里写「已完成盲区扫描」。
 
 强制结构:
 | 文件                                | 最低字段                                        |
 |-------------------------------------|-------------------------------------------------|
+| process/0_method_selection.md        | 写出研究类型 / 选用工具 / 未选工具及理由,且至少包含 1 个工具编号 |
 | process/3a_coding.md                | 至少 5 条 #interview_*/#survey_* 引用(非 wiki 模式) |
 | process/3b_blind_spots.md           | 至少 3 条「低频高强度」或「沉默信号」          |
 | process/3c_associations.md          | 至少 1 条 N×N 跨主题关联(「主题 A ↔ 主题 B」)  |
@@ -46,7 +47,40 @@ REF_ID_RE = re.compile(r"#(?:interview|survey|feedback)_[A-Za-z0-9_-]+")
 THEME_LINK_RE = re.compile(r"[一-鿿A-Za-z0-9_]{2,}\s*[↔<>→\-]+\s*[一-鿿A-Za-z0-9_]{2,}")
 COUNTER_EVIDENCE_KEYWORDS = ["反面证据", "反例", "反驳", "已搜未找到", "未找到反例", "无反例"]
 ALT_EXPLANATION_KEYWORDS = ["替代解释", "替代假设", "另一种解释", "也可能是", "备选解释", "竞争性解释"]
+TOOL_REF_RE = re.compile(r"工具\s*\d+")
 
+
+
+def check_0_method_selection(process_dir: Path) -> list[Finding]:
+    findings: list[Finding] = []
+    f = process_dir / "0_method_selection.md"
+    if not f.is_file():
+        findings.append(Finding(
+            rule_id="P_MISSING_0_METHOD",
+            rule_name="缺 process/0_method_selection.md(方法选择)",
+            file="0_method_selection.md",
+            detail="文件不存在",
+            hint="正式侦探分析前必须记录研究类型、选用工具、未选工具及理由,防止工具箱被口头声明但未实际使用。",
+        ))
+        return findings
+    text = f.read_text(encoding="utf-8")
+    required = ["研究类型", "选用工具", "未选工具", "理由"]
+    missing = [item for item in required if item not in text]
+    tools = TOOL_REF_RE.findall(text)
+    if missing or not tools:
+        detail = []
+        if missing:
+            detail.append("缺少字段:" + ",".join(missing))
+        if not tools:
+            detail.append("未找到工具编号(如 工具 1)")
+        findings.append(Finding(
+            rule_id="P_THIN_0_METHOD",
+            rule_name="0_method_selection.md 方法选择过薄",
+            file="0_method_selection.md",
+            detail="; ".join(detail),
+            hint="写出研究类型、选用工具、未选工具及理由,并至少列出 1 个工具编号。",
+        ))
+    return findings
 
 def check_3a_coding(process_dir: Path, wiki_mode: bool) -> list[Finding]:
     findings: list[Finding] = []
@@ -196,6 +230,7 @@ def check_3e_evidence_chains(process_dir: Path) -> list[Finding]:
 
 def lint(process_dir: Path, wiki_mode: bool) -> list[Finding]:
     findings: list[Finding] = []
+    findings.extend(check_0_method_selection(process_dir))
     findings.extend(check_3a_coding(process_dir, wiki_mode))
     findings.extend(check_3b_blind_spots(process_dir))
     findings.extend(check_3c_associations(process_dir))

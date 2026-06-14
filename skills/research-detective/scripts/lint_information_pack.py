@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-B1 信息包(information_pack_*.md)lint —— 三类机器可查规则。
+AI 接力包（information_pack_*.md）lint —— 三类机器可查规则。
 
 对照 contracts/information_pack.md §3 / §7 的红线条款实现:
 1. 清理类:无 HTML 注释、无 {{...}} 占位符、frontmatter 必填字段已填
@@ -70,7 +70,7 @@ def load_pack(path: Path) -> Pack:
 def parse_simple_yaml(text: str) -> dict:
     """
     极简 YAML 解析:只支持 key: value 和一级缩进的嵌套 map。
-    够 B1 frontmatter 用,不引入第三方依赖。
+    够 AI 接力包 frontmatter 用,不引入第三方依赖。
     """
     result: dict = {}
     current_key: str | None = None
@@ -137,7 +137,7 @@ def check_cleanup(pack: Pack) -> list[Finding]:
                 rule_name="残留 HTML 注释",
                 line=i,
                 detail=f"行 {i} 含 `<!--`",
-                hint="模板里的注释是给 detective 的指引,生成最终 B1 时必须全部删除",
+                hint="模板里的注释是给 detective 的指引,生成最终 AI 接力包时必须全部删除",
             ))
 
     # 占位符 {{...}}:全文不允许出现
@@ -374,8 +374,8 @@ def render_text(findings: list[Finding], path: Path) -> str:
 
 def render_md(findings: list[Finding], path: Path) -> str:
     if not findings:
-        return f"## B1 lint: {path.name}\n\n通过(0 红线)。\n"
-    lines = [f"## B1 lint: {path.name}", "", f"**红线 {len(findings)} 条**", ""]
+        return f"## AI 接力包 lint: {path.name}\n\n通过(0 红线)。\n"
+    lines = [f"## AI 接力包 lint: {path.name}", "", f"**红线 {len(findings)} 条**", ""]
     lines.append("| 规则 | 名称 | 位置 | 详情 | 修复 |")
     lines.append("| --- | --- | --- | --- | --- |")
     for f in findings:
@@ -388,7 +388,7 @@ def render_md(findings: list[Finding], path: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="lint B1 信息包(清理 / 跨 ID 完整性 / 结构)",
+        description="lint AI 接力包（清理 / 跨 ID 完整性 / 结构）",
     )
     parser.add_argument("path", type=str, help="information_pack_*.md 路径")
     parser.add_argument(
