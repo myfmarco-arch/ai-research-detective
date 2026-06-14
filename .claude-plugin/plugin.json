@@ -1,6 +1,6 @@
 {
   "name": "ai-research-detective",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "description": "侦探方法论研究分析工具集：入库（archivist）+ 分析（detective，按需产出 B1 信息包给下游 AI 工作流）+ 对抗审查（reviewer，默认走 multi-agent 采样取交集对抗 LLM 随机性）。三个 skill 共享冷启动流程、模板、项目级硬约束。交付前自动运行 5 道反幻觉机器检查：CONTEXT 质量、wiki 引用 100% 全量校验、5 个侦探动作分文件强制、写作风格 lint、review.md 搜索记录 + 跨角色证据强度复核。",
   "author": {
     "name": "myfmarco-arch"

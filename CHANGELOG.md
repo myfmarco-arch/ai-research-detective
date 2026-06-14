@@ -2,6 +2,30 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式与 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [1.0.0] — 2026-06-13
+
+### 增
+
+- 显性化侦探方法论创新点：README 新增核心创新、五个侦探动作、适用/不适用场景。
+- `research-detective` 新增 `guides/method_index.md`，正式分析前要求写入 `process/0_method_selection.md`，记录研究类型、选用工具、未选工具及理由、方法风险。
+- `lint_process.py` 新增方法选择检查，测试覆盖 good/bad fixture。
+- `research-archivist` 新增 `lint_source_coverage.py` 和 `wiki/_source_coverage.md` 约定，防止入库时每份资料只浅摘几个亮点。
+- 新增 `tests/skill_trigger_and_innovation_cases.md`，记录触发边界和创新点验收用例。
+
+### 改
+
+- 用户可见输出命名统一为研究简报、深度分析报告、证据链图谱、侦探备忘录、AI 接力包；文件名保留兼容。
+- README 重写为更面向研究员和跨职能读者的结构，覆盖多源材料（访谈、问卷、反馈、舆情、文献、竞品）。
+- `research-detective` 触发词扩展，明确排除入库、研究规划、快速初看和纯对抗审查。
+- archivist 入库流程强化深度提取、逐份覆盖台账和回检规则。
+
+### 测试
+
+- archivist 脚本测试 17 / 17 通过。
+- detective 脚本测试 64 / 64 通过。
+
+---
+
 ## [0.7.0] — 2026-06-09
 
 ### 改
