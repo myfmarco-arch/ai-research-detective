@@ -1,11 +1,13 @@
 {
   "name": "ai-research-detective",
-  "owner": { "name": "myfmarco-arch" },
+  "owner": {
+    "name": "myfmarco-arch"
+  },
   "plugins": [
     {
       "name": "ai-research-detective",
       "source": "./",
-      "description": "分析研究资料、找隐藏洞察、写可证伪的研究报告。侦探方法论工具集：入库 archivist + 分析 detective + 对抗审查 reviewer，5 道反幻觉机器检查。"
+      "description": "把访谈、问卷、反馈、舆情、文献和竞品资料转成可追溯研究结论。侦探方法论工具集：入库 archivist + 分析 detective + 对抗审查 reviewer，显性工具选择、证据链、AI 接力包和多道机器检查。"
     }
   ]
 }
