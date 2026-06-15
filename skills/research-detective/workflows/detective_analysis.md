@@ -27,8 +27,7 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_process.py --wiki-mode process/  # wiki
 
 **执行细节与按需工具(落笔前先读)**:
 
-- 方法入口见 [method_index.md](../guides/method_index.md)：先判断课题类型，写 `process/0_method_selection.md`
-- 五个侦探动作的补充标准见 [research_methodology.md](../guides/research_methodology.md)：置信度、备忘录格式和方法关系
+- 方法入口见 [method_index.md](../guides/method_index.md)：先判断课题类型，写 `process/0_method_selection.md`；同时对齐五个侦探动作的置信度、备忘录格式和方法关系
 - 26 个分析工具见 [detective_toolkit.md](../guides/detective_toolkit.md) 末尾速查表；按课题类型挑工具，不要默认全跑
 - 各小节末尾的「⮕ 工具触发」是常见场景下推荐加载的具体工具号,看到对应信号就去 toolkit 查那一节
 

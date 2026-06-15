@@ -151,6 +151,6 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/lint_information_pack.py outputs/information
 - 回答具体问题、没要求完整报告时，加载 [workflows/brief_workflow.md](workflows/brief_workflow.md)。
 - 写完整/正式/深度研究报告时，加载 [workflows/report_workflow.md](workflows/report_workflow.md)。
 - 正式进入侦探分析前，必须加载 [guides/method_index.md](guides/method_index.md) 和 [guides/detective_toolkit.md](guides/detective_toolkit.md) 的速查表，选择工具组合并写入 `process/0_method_selection.md`；只执行选中的工具，不要默认全跑 26 个工具。
-- 落笔前读 [guides/writing_style.md](guides/writing_style.md)；完整报告还要读 [guides/report_principles.md](guides/report_principles.md) 和 [templates/simple_report.md](templates/simple_report.md)。
+- 落笔前读 [guides/writing_style.md](guides/writing_style.md)；完整报告还要读 [guides/report_principles.md](guides/report_principles.md)、[guides/deep_report_style.md](guides/deep_report_style.md) 和 [templates/simple_report.md](templates/simple_report.md)。若项目有公司 / 使用者专属风格文件,优先加载该独立文件。
 - 生成 AI 接力包前读 [../../contracts/information_pack.md](../../contracts/information_pack.md)；wiki 回写前读 [../../contracts/analysis_writeback.md](../../contracts/analysis_writeback.md) 和 [../../contracts/wiki_format.md](../../contracts/wiki_format.md)。
 - 通用研究规则只以 [../../shared/CLAUDE.md](../../shared/CLAUDE.md) 的 `Research Rules` 为单一真源。

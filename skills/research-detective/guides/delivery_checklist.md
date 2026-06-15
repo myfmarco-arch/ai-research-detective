@@ -13,11 +13,12 @@
 
 - [ ] [report_principles.md](report_principles.md) 文末 **13 项自检清单**全部通过（底线 2 + 结构 7 + 表达 4）
 - [ ] [writing_style.md](writing_style.md) 的**自查清单 15 条**全部通过
+- [ ] 若加载了表达 profile（如 [deep_report_style.md](deep_report_style.md) 或项目自定义风格文件），已通过该 profile 的自检清单，且未覆盖事实、证据强度和可追溯性红线
 
 ## C. 侦探方法专属（差异化价值，不能跳）
 
 - [ ] 已先完成 `process/0_method_selection.md`：研究类型、选用工具、未选工具及理由、方法风险都明确
-- [ ] 已对照 [method_index.md](method_index.md) 和 [research_methodology.md](research_methodology.md) 完成五个侦探动作（3a 全量记忆编码 / 3b 盲区扫描 / 3c 全局关联 / 3d 矛盾审计 / 3e 证据强度评估），不是只套了报告模板
+- [ ] 已对照 [method_index.md](method_index.md) 完成五个侦探动作（3a 全量记忆编码 / 3b 盲区扫描 / 3c 全局关联 / 3d 矛盾审计 / 3e 证据强度评估）、置信度标准和侦探备忘录，不是只套了报告模板
 - [ ] 侦探备忘录已完成（盲区扫描、隐藏关联、矛盾审计、证据强度）——可在主报告中分散呈现，但分析必须做
 - [ ] 反面证据已穿插进每个核心发现，不是只集中在备忘录或附录
 - [ ] 已知样本偏差在受影响的发现旁用 ⚠ 标注，不只放附录免责

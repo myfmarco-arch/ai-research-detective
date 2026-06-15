@@ -65,7 +65,7 @@
 - [ ] 判断词（重要/严重/边缘/主流等）是否能用 CONTEXT 声明的"我的身份"对应的方法学语言解释？
 - [ ] **跑一次 `python3 ${CLAUDE_SKILL_DIR}/../research-detective/scripts/lint_report.py <报告文件>`**：红线 0 处？黄线已逐条人工复核给出非套路理由？输出（红线/黄线计数 + 命中行号）粘贴到本节作为证据。lint 覆盖 17 条机器可查规则（11 红 6 黄），按 5 层组织——完整对照见 [writing_style.md 第七节](../../research-detective/guides/writing_style.md)。论证层（建议悬空 / 标题非 finding / 稻草人 / 同义词堆叠 / 用户语气倾向 / 论证层春秋笔法）仍需人工对照
 - [ ] **跑一次 `python3 ${CLAUDE_SKILL_DIR}/scripts/lint_review.py outputs/review.md`**:**退出码 0** 才能交付。验:每个结论的「**搜索记录**」段、confirmed 的 3 轮 + 2 编号门槛、weakened/challenged 的「**反面证据**」段、整文档的「证据强度复核」表 + 「重标依据」列非空——这是反幻觉 H12(留足迹)+ H6(跨角色复核)的机器化检查
-- [ ] 报告是否真的执行了 [research-detective/guides/research_methodology.md](../../research-detective/guides/research_methodology.md) 的五个侦探动作（全量记忆编码 / 盲区扫描 / 全局关联 / 矛盾审计 / 证据强度评估），还是只套了报告模板？任一动作没落地（如全报告无反面证据 = 矛盾审计缺失，无样本偏差标注 = 盲区扫描缺失）即标 ❌ 并指出缺失的动作
+- [ ] 报告是否真的执行了 [research-detective/guides/method_index.md](../../research-detective/guides/method_index.md) 的五个侦探动作（全量记忆编码 / 盲区扫描 / 全局关联 / 矛盾审计 / 证据强度评估），还是只套了报告模板？任一动作没落地（如全报告无反面证据 = 矛盾审计缺失，无样本偏差标注 = 盲区扫描缺失）即标 ❌ 并指出缺失的动作
 
 ## 附加发现（可选）
 [搜索过程中意外发现的、报告没提到但可能有价值的信息]
